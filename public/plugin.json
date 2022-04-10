@@ -1,0 +1,47 @@
+{
+  "pluginName": "休息一下",
+  "description": "休息一下 - 休息提醒插件",
+  "author": "Trent0",
+  "version": "0.1.0",
+  "homepage": "https://github.com/trentlee0/take-a-break",
+  "logo": "logo.png",
+  "main": "index.html",
+  "preload": "preload.js",
+  "development": {
+    "main": "http://127.0.0.1:8080"
+  },
+  "features": [
+    {
+      "code": "take-a-break",
+      "explain": "休息一下",
+      "cmds": [
+        "休息一下",
+        "Take a Break"
+      ]
+    },
+    {
+      "code": "start-work",
+      "explain": "开始工作倒计时",
+      "cmds": [
+        "开始工作",
+        "Start to Work"
+      ]
+    },
+    {
+      "code": "start-rest",
+      "explain": "开始休息倒计时",
+      "cmds": [
+        "开始休息",
+        "Start to Rest"
+      ]
+    },
+    {
+      "code": "stop-continue-clock",
+      "explain": "暂停当前倒计时、继续上一个倒计时",
+      "cmds": [
+        "暂停或继续计时",
+        "Stop Continue Timing"
+      ]
+    }
+  ]
+}

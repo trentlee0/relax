@@ -7,16 +7,30 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "axios": "^0.26.1",
+    "be-full": "^0.1.3",
     "core-js": "^3.6.5",
+    "dayjs": "^1.10.6",
+    "file-saver": "^2.0.5",
+    "localforage": "^1.10.0",
+    "timer.js": "^1.0.4",
     "vue": "^2.6.11",
     "vue-router": "^3.2.0",
+    "vuetify": "^2.6.0",
     "vuex": "^3.4.0"
   },
   "devDependencies": {
+    "@mdi/font": "^6.6.96",
+    "@types/file-saver": "^2.0.5",
     "@vue/cli-plugin-babel": "~4.5.13",
     "@vue/cli-plugin-router": "~4.5.13",
     "@vue/cli-plugin-vuex": "~4.5.13",
     "@vue/cli-service": "~4.5.13",
-    "vue-template-compiler": "^2.6.11"
+    "sass": "~1.32.0",
+    "sass-loader": "^10.0.0",
+    "utools-api-types": "^2.6.0",
+    "vue-cli-plugin-vuetify": "~2.4.8",
+    "vue-template-compiler": "^2.6.11",
+    "vuetify-loader": "^1.7.0"
   }
 }

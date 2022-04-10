@@ -1,19 +1,13 @@
-# utools-take-a-break
+# take-a-break
 
-## Project setup
-```
-npm install
-```
+> 休息一下 - uTools 插件 / Web App
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+## 使用的开源库
 
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+- [axios](https://github.com/axios/axios)
+- [dayjs](https://github.com/iamkun/dayjs)
+- [FileSaver.js](https://github.com/eligrey/FileSaver.js)
+- [localForage](https://github.com/localForage/localForage)
+- [timer.js](https://github.com/husa/timer.js)
+- [vue](https://github.com/vuejs/vue)
+- [vuetify](https://github.com/vuetifyjs/vuetify)
