@@ -1,8 +1,8 @@
 import logoImg from '@/assets/logo.png'
-import {isUtools} from '@/util/platforms'
+import {isUTools} from '@/util/platforms'
 
 export function requestNotificationPermission() {
-  if (!isUtools()) {
+  if (!isUTools()) {
     if (Notification) {
       if (Notification.permission !== 'granted') {
         Notification.requestPermission()
@@ -17,7 +17,7 @@ export function requestNotificationPermission() {
 }
 
 export function showNotice(content, closeTimeout) {
-  if (isUtools()) {
+  if (isUTools()) {
     utools.showNotification(content, 'take-a-break')
   } else {
     const N = new Notification('Take A Break', {

@@ -151,7 +151,7 @@
             <v-subheader class="pl-0">引言来源</v-subheader>
             <v-col cols="6">
               <v-select
-                v-model="quoteSourceItem"
+                v-model="quoteSourceSelectedItem"
                 :items="quoteSourceItems"
                 menu-props="auto"
                 solo
@@ -175,7 +175,7 @@
 
             <v-col cols="12">
               <v-select
-                v-model="backgroundItem"
+                v-model="backgroundSelectedItem"
                 :items="backgroundTypeItems"
                 menu-props="auto"
                 solo
@@ -199,7 +199,7 @@
                   <div>
                     <v-form
                       ref="form"
-                      v-model="valid"
+                      v-model="imageSizeValid"
                       lazy-validation
                     >
                       <v-file-input
@@ -216,7 +216,7 @@
                     <v-img
                       :src="bgImage"
                       class="white--text align-end"
-                      :gradient="!bgImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
+                      :gradient="!bgImage || !bgImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
                       height="250px"
                     >
                     </v-img>
@@ -235,17 +235,47 @@
         subheader
         three-line
       >
-        <v-subheader class="font-weight-bold">删除</v-subheader>
+        <v-subheader class="font-weight-bold">导入</v-subheader>
 
         <v-list-item>
           <v-list-item-content>
-            <v-btn class="mt-2" large color="error" @click="deleteSetting">
-              删除设置数据
-            </v-btn>
+            <v-row>
+              <v-col cols="6">
+                <v-file-input
+                  accept=".json"
+                  outlined
+                  dense
+                  @change="importSettingFile = $event"
+                  label="选择导入设置文件"
+                ></v-file-input>
+              </v-col>
+              <v-col cols="6">
+                <v-btn class="mt-1" color="primary" @click="importSetting">
+                  开始导入
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-list-item-content>
+        </v-list-item>
 
-            <v-btn class="mt-5" large color="error" @click="deleteStatistic">
-              删除统计数据
-            </v-btn>
+        <v-list-item>
+          <v-list-item-content>
+            <v-row>
+              <v-col cols="6">
+                <v-file-input
+                  accept=".json"
+                  outlined
+                  dense
+                  @change="importStatisticFile = $event"
+                  label="选择导入统计文件"
+                ></v-file-input>
+              </v-col>
+              <v-col cols="6">
+                <v-btn class="mt-1" color="primary" @click="importStatistic">
+                  开始确认
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -279,21 +309,17 @@
         subheader
         three-line
       >
-        <v-subheader class="font-weight-bold">导入</v-subheader>
+        <v-subheader class="font-weight-bold">删除</v-subheader>
 
         <v-list-item>
           <v-list-item-content>
-            <v-file-input
-              accept=".json"
-              label="选择导入的设置数据文件"
-              @change="importSetting"
-            ></v-file-input>
+            <v-btn class="mt-2" large color="error" @click="deleteSetting">
+              删除设置数据
+            </v-btn>
 
-            <v-file-input
-              accept=".json"
-              label="选择导入的统计数据文件"
-              @change="importStatistic"
-            ></v-file-input>
+            <v-btn class="mt-5" large color="error" @click="deleteStatistic">
+              删除统计数据
+            </v-btn>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -306,39 +332,23 @@ import {
   backgroundChinese,
   backgroundType,
   quoteType,
-  quoteChinese, defaultSetting
-} from '@/util/constants'
-import {isUtools} from '@/util/platforms'
-import storages from '@/util/storages'
+  quoteChinese
+} from '@/store/constants'
+import {isUTools} from '@/util/platforms'
 import Dialog from '@/components/Dialog'
-import statistics from '@/util/statistics'
+import settings from '@/store/settings'
+import statistics from '@/store/statistics'
 import {arrayBufferToBase64ImagePNG} from '@/util/requests'
+import {mapState} from 'vuex'
 
 export default {
   name: 'Setting',
   components: {Dialog},
   data() {
     return {
-      workingTime: 45,
-      restingTime: 5,
-      notification: {
-        whenEndOfWorkingTime: true,
-        beforeEndOfWorkingTime: false,
-        whenEndOfRestingTime: true
-      },
-      quoteSourceItems: [
-        quoteChinese[quoteType.HITOKOTO],
-        quoteChinese[quoteType.CUSTOM]
-      ],
-      quoteSourceItem: '',
+      quoteSourceSelectedItem: '',
       customQuote: '',
-      backgroundTypeItems: [
-        backgroundChinese[backgroundType.UNSPLASH],
-        backgroundChinese[backgroundType.BING],
-        backgroundChinese[backgroundType.IMAGE],
-        backgroundChinese[backgroundType.COLOR]
-      ],
-      backgroundItem: '',
+      backgroundSelectedItem: '',
       bgColor: '',
       bgImage: '',
       successSnackbar: false,
@@ -351,115 +361,90 @@ export default {
       rules: [
         value => !value || value.size < this.fileMaxSize || '背景图片大小应该小于' + this.fileMaxSize / 1_000_000 + 'MB！'
       ],
-      valid: true
+      imageSizeValid: true,
+      importSettingFile: null,
+      importStatisticFile: null
     }
   },
   computed: {
+    ...mapState({
+      background: state => state.background,
+      quote: state => state.quote,
+      workingTime: state => state.workingTime / 60,
+      restingTime: state => state.restingTime / 60,
+      notification: state => state.notification
+    }),
+    quoteSourceItems() {
+      return Object
+        .values(quoteType)
+        .filter(value => isUTools() ? true : value !== quoteType.SHANBAY)
+        .map(value => quoteChinese[value])
+    },
+    backgroundTypeItems() {
+      return Object
+        .values(backgroundType)
+        .filter(value => isUTools() ? true : value !== backgroundType.SHANBAY)
+        .map(value => backgroundChinese[value])
+    },
     isImage() {
-      return this.backgroundItem === backgroundChinese.image
+      return this.backgroundSelectedItem === backgroundChinese.image
     },
     isColor() {
-      return this.backgroundItem === backgroundChinese.color
+      return this.backgroundSelectedItem === backgroundChinese.color
     },
     isCustomQuote() {
-      return this.quoteSourceItem === quoteChinese.custom
+      return this.quoteSourceSelectedItem === quoteChinese.custom
     },
     isUtools() {
-      return isUtools()
+      return isUTools()
     }
   },
   created() {
-    this.initData()
+    this.initState()
   },
   mounted() {
     window.document.documentElement.style.overflowY = 'auto'
   },
   methods: {
-    initData() {
-      if (isUtools()) {
-        this.quoteSourceItems.splice(0, 0, quoteChinese[quoteType.SHANBAY])
-        this.backgroundTypeItems.splice(0, 0, backgroundChinese[backgroundType.SHANBAY])
-      }
+    initState() {
+      this.backgroundSelectedItem = backgroundChinese[this.background.type]
+      this.quoteSourceSelectedItem = quoteChinese[this.quote.type]
 
-      if (this.$store.getters.getBackground) {
-        this.backgroundItem = backgroundChinese[this.$store.getters.getBackground.type]
-      }
+      if (this.background.type === backgroundType.COLOR) this.bgColor = this.background.val
 
-      if (this.$store.getters.getBackgrounds) {
-        this.bgColor = this.$store.getters.getBackgrounds.color.val
-        this.bgImage = this.$store.getters.getBackgrounds.image.val
-      }
-
-      if (this.$store.getters.getQuoteSelected) {
-        this.quoteSourceItem = quoteChinese[this.$store.getters.getQuoteSelected]
-      }
-
-      if (this.$store.getters.getCustomQuote) {
-        this.customQuote = this.$store.getters.getCustomQuote.val
-      }
-
-      if (this.$store.getters.getNotification) {
-        this.notification = this.$store.getters.getNotification
-      }
-
-      if (this.$store.getters.getWorkingTime) {
-        this.workingTime = this.$store.getters.getWorkingTime / 60
-      }
-
-      if (this.$store.getters.getRestingTime) {
-        this.restingTime = this.$store.getters.getRestingTime / 60
-      }
+      settings.getAttachment(backgroundType.IMAGE)
+        .then(res => {
+          this.bgImage = res.data
+        })
     },
     back() {
       this.$router.replace('/')
     },
     save() {
-      if (this.backgroundItem) {
-        switch (this.getKeyByValue(backgroundChinese, this.backgroundItem)) {
+      try {
+        const selectedQuoteType = this.getKeyByValue(quoteChinese, this.quoteSourceSelectedItem)
+        this.$store.commit('UPDATE_QUOTE', [selectedQuoteType, this.customQuote])
+
+        const selectedBackgroundType = this.getKeyByValue(backgroundChinese, this.backgroundSelectedItem)
+        switch (selectedBackgroundType) {
           case backgroundType.COLOR:
-            this.$store.commit('SET_BACKGROUND_SELECTED', backgroundType.COLOR)
-            this.$store.commit('SET_BACKGROUND_COLOR', this.bgColor)
+            this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.bgColor])
             break
           case backgroundType.IMAGE:
-            this.$store.commit('SET_BACKGROUND_SELECTED', backgroundType.IMAGE)
-            this.$store.commit('SET_BACKGROUND_IMAGE', this.bgImage)
-            break
-          case backgroundType.BING:
-            this.$store.commit('SET_BACKGROUND_SELECTED', backgroundType.BING)
-            break
-          case backgroundType.SHANBAY:
-            this.$store.commit('SET_BACKGROUND_SELECTED', backgroundType.SHANBAY)
+            this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.bgImage])
             break
           default:
-            this.$store.commit('SET_BACKGROUND_SELECTED', backgroundType.UNSPLASH)
+            this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType])
         }
-      }
 
-      if (this.quoteSourceItem) {
-        switch (this.getKeyByValue(quoteChinese, this.quoteSourceItem)) {
-          case quoteType.CUSTOM:
-            this.$store.commit('SET_QUOTE_SELECTED', quoteType.CUSTOM)
-            this.$store.commit('SET_QUOTE_CUSTOM', this.customQuote)
-            break
-          case quoteType.SHANBAY:
-            this.$store.commit('SET_QUOTE_SELECTED', quoteType.SHANBAY)
-            break
-          default:
-            this.$store.commit('SET_QUOTE_SELECTED', quoteType.HITOKOTO)
-        }
-      }
-
-      if (this.workingTime) {
         this.$store.commit('SET_WORKING_TIME', this.workingTime * 60)
-      }
-      if (this.restingTime) {
         this.$store.commit('SET_RESTING_TIME', this.restingTime * 60)
-      }
-      if (this.notification) {
         this.$store.commit('SET_NOTIFICATION', this.notification)
-      }
 
-      this.showSuccessSnackBar('保存成功')
+        this.showSuccessSnackBar('保存成功')
+      } catch (err) {
+        this.showErrorSnackBar('保存失败，原因：' + err.message)
+      }
     },
     deleteSetting() {
       this.deleteSettingDialog = true
@@ -473,79 +458,80 @@ export default {
       this.errorSnackbarMsg = msg
     },
     deleteSettingDialogOk() {
-      storages.removeSetting()
-      storages.initData()
-      this.$store.commit('SET_ALL', defaultSetting)
-      this.initData()
-      this.showSuccessSnackBar('删除成功')
-      this.deleteSettingDialog = false
+      this.$store.commit('RESET')
+      settings.removeAttachment(backgroundType.BING).then(() => {
+        settings.removeAttachment(backgroundType.SHANBAY).then(() => {
+          settings.removeAttachment(backgroundType.UNSPLASH).then(() => {
+            settings.removeAttachment(backgroundType.IMAGE).then(() => {
+              this.initState()
+              this.deleteSettingDialog = false
+              this.showSuccessSnackBar('删除成功')
+            }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
+          }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
+        }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
+      }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
     },
     deleteStatistic() {
       this.deleteStatisticDialog = true
     },
     deleteStatisticDialogOk() {
       statistics.removeStatistic()
-      this.showSuccessSnackBar('删除成功')
-      this.deleteStatisticDialog = false
+        .then(() => {
+          this.deleteStatisticDialog = false
+          this.showSuccessSnackBar('删除成功')
+        })
+        .catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
     },
     toTop() {
       scrollTo(0, 0)
     },
     getKeyByValue(obj, targetVal) {
-      for (let [key, val] of Object.entries(obj)) {
-        if (val === targetVal) return key
-      }
+      for (let [key, val] of Object.entries(obj)) if (val === targetVal) return key
     },
     selectImageFile(file) {
       if (!file) return
       let reader = new FileReader()
       reader.readAsArrayBuffer(file)
-      reader.onload = (e) => {
-        if (this.valid) {
-          this.bgImage = arrayBufferToBase64ImagePNG(reader.result)
-        }
+      reader.onload = () => {
+        if (this.imageSizeValid) this.bgImage = arrayBufferToBase64ImagePNG(reader.result)
       }
     },
     clearImageFile() {
       this.bgImage = ' '
     },
     exportSetting() {
-      storages.exportSettingToJSON(this.$store.getters.getAll)
-        .then(res => this.showSuccessSnackBar('导出成功'))
-        .catch(err => {
-          this.showErrorSnackBar('导出失败')
-          console.error(err)
-        })
+      settings.exportSettingToJSON(this.$store.getters.getAll)
+        .then(() => this.showSuccessSnackBar('导出成功'))
+        .catch(err => this.showErrorSnackBar('导出失败，原因：' + err.message))
     },
-    importSetting(file) {
-      if (!file) return
-      storages.importJSONToSetting(file)
-        .then(res => {
-          this.$store.commit('SET_ALL', res.data)
-          this.initData()
-          this.showSuccessSnackBar('导入成功')
-        })
-        .catch(err => {
-          this.showErrorSnackBar('导入失败')
-          console.error(err)
-        })
+    importSetting() {
+      let file = this.importSettingFile
+      if (!file) {
+        this.showErrorSnackBar('请选择文件')
+        return
+      }
+      settings.importJSONToSetting(file).then(res => {
+        this.$store.commit('SET_ALL', res.data)
+        this.initState()
+        this.showSuccessSnackBar('导入成功')
+      }).catch(err => {
+        this.showErrorSnackBar('导入失败，原因：' + err.message)
+      })
     },
     exportStatistic() {
       statistics.exportStatisticToJSON()
-        .then(res => this.showSuccessSnackBar('导出成功'))
-        .catch(err => {
-          this.showErrorSnackBar('导出失败')
-          console.error(err)
-        })
+        .then(() => this.showSuccessSnackBar('导出成功'))
+        .catch(err => this.showErrorSnackBar('导出失败，原因：' + err.message))
     },
-    importStatistic(file) {
-      if (!file) return
+    importStatistic() {
+      let file = this.importStatisticFile
+      if (!file) {
+        this.showErrorSnackBar('请选择文件')
+        return
+      }
       statistics.importJSONToStatistic(file)
-        .then(res => this.showSuccessSnackBar('导入成功'))
-        .catch(err => {
-          this.showErrorSnackBar('导入失败')
-          console.error(err)
-        })
+        .then(() => this.showSuccessSnackBar('导入成功'))
+        .catch(err => this.showErrorSnackBar('导入失败，原因：' + err.message))
     }
   }
 }

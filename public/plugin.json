@@ -2,7 +2,7 @@
   "pluginName": "休息一下",
   "description": "休息一下 - 休息提醒插件",
   "author": "Trent0",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "homepage": "https://github.com/trentlee0/take-a-break",
   "logo": "logo.png",
   "main": "index.html",

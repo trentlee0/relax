@@ -8,7 +8,7 @@
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>
 
-      <v-toolbar-title>统计</v-toolbar-title>
+      <v-toolbar-title>工作统计</v-toolbar-title>
 
       <v-spacer></v-spacer>
     </v-toolbar>
@@ -48,24 +48,24 @@
           <v-card
             flat
             class="ma-auto"
-            max-width="600"
-          >
+            max-width="600">
+
             <v-timeline
               align-top
               dense
             >
-              <div v-for="(value, key, i) in dayGroups" :key="i">
+              <div v-for="(value, i) in dayGroupsPagination" :key="i">
                 <v-timeline-item
                   class="mb-6"
                 >
 
-                  <div><strong>{{ key }}</strong></div>
-                  <div>工作了 {{ formatMinute(value.sum) }}</div>
+                  <div><strong>{{ value[0] }}</strong></div>
+                  <div>工作了 {{ formatMinute(value[1].sum) }}</div>
                 </v-timeline-item>
 
                 <v-timeline-item
                   small
-                  v-for="(item, j) in value.data"
+                  v-for="(item, j) in value[1].data"
                   :key="j"
                 >
                   <v-row class="pt-1">
@@ -150,9 +150,12 @@
 </template>
 
 <script>
-import statistics from '@/util/statistics'
+import statistics from '@/store/statistics'
 import {formatMinute} from '@/util/durations'
 import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+
+dayjs.extend(customParseFormat)
 
 export default {
   name: 'Statistic',
@@ -160,13 +163,21 @@ export default {
     return {
       tab: null,
       tabs: ['时间线', '近7天统计'],
-      dayGroups: {},
+      dayGroups: [],
       dailyMinutes: [],
       dailyMinuteLabels: [],
-      isEmpty: true
+      isEmpty: true,
+      currentPage: 0,
+      pageSize: 7
     }
   },
   computed: {
+    dayGroupsPagination() {
+      return this.dayGroups.slice(0, Math.min(this.dayGroups.length, (this.currentPage + 1) * this.pageSize))
+    },
+    pageTotal() {
+      return this.dayGroups.length / this.pageSize
+    },
     minutesAvg() {
       const sum = this.dailyMinutes.reduce((acc, cur) => acc + cur, 0)
       const length = this.dailyMinutes.length - 1
@@ -177,21 +188,41 @@ export default {
   created() {
     const dateFormat = 'YYYY年MM月DD日'
     statistics.listGroupByDay(dateFormat)
-      .then(data => {
+      .then(res => {
+        const data = res.data
         if (data) this.isEmpty = false
 
-        this.dayGroups = data
-        const before7day = dayjs().subtract(7, 'd').format(dateFormat)
-        this.dailyMinutes = Object.keys(this.dayGroups)
-          .filter(date => date > before7day)
-          .map(e => this.dayGroups[e].sum)
+        this.dayGroups = Object.entries(data)
+          .sort((a, b) => a[0] > b[0] ? 1 : -1)
+          .reverse()
+
+        const before7day = dayjs().subtract(7, 'd')
+        this.dailyMinutes = new Array(7).fill(0, 0, 7)
+        this.dayGroups
+          .slice(0, 7)
+          .forEach((value) => {
+            const i = dayjs(value[0], dateFormat).diff(before7day, 'day')
+            this.dailyMinutes[i] = value[1].sum
+          })
         this.dailyMinuteLabels = this.dailyMinutes.map(e => e + 'min')
-        this.dailyMinuteLabels.splice(0, 0, 'Before')
+        this.dailyMinuteLabels[0] = 'Before'
+
         this.dailyMinutes.splice(0, 0, 0)
+        this.dailyMinuteLabels.splice(0, 0, 'Before')
       })
   },
   mounted() {
     window.document.documentElement.style.overflowY = 'overlay'
+
+    window.addEventListener('scroll', () => {
+      let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
+      let windowHeight = document.documentElement.clientHeight || document.body.clientHeight
+      let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+      let scrollBottom = scrollHeight - windowHeight - scrollTop
+      if (scrollBottom <= 0) {
+        if (this.currentPage < this.pageTotal) this.currentPage++
+      }
+    })
   },
   methods: {
     formatTime(timestamp) {
@@ -214,5 +245,4 @@ export default {
 </script>
 
 <style scoped>
-
 </style>

@@ -11,7 +11,7 @@
         icon
         fab
         large
-        dark
+        :dark="darkStyle"
         class="dashboard-btn"
         title="统计"
         @click="toStatistic"
@@ -23,7 +23,7 @@
         icon
         fab
         large
-        dark
+        :dark="darkStyle"
         class="setting-btn"
         @click="toSetting"
         title="设置"
@@ -36,7 +36,7 @@
         icon
         fab
         large
-        dark
+        :dark="darkStyle"
         class="full-btn"
         title="全屏"
         @click="fullBtnClick"
@@ -48,8 +48,8 @@
     <div id="main">
       <div class="container">
         <div class="quote-div ">
-          <div class="quote-content-div" v-show="quote.content">
-            「 {{ quote.content }} 」
+          <div class="quote-content-div" :style="{'color': (darkStyle ? 'white': '#141111')}" v-show="quoteText">
+            「 {{ quoteText }} 」
           </div>
         </div>
 
@@ -59,14 +59,22 @@
             :size="290"
             :width="10"
             :value="progress"
-            color="#bdbdbd"
+            :color="darkStyle ? 'grey lighten-1' : 'grey darken-3'"
           >
             <div class="tick-time-div">
               <div>
-                <v-icon dark v-if="isWorkingTime" :title="currentTip">mdi-laptop</v-icon>
-                <v-icon dark v-else title="休息" :title="currentTip">mdi-coffee-outline</v-icon>
+                <v-icon
+                  :dark="darkStyle" :title="currentTip" v-if="isWorkingTime"
+                >
+                  mdi-laptop
+                </v-icon>
+                <v-icon
+                  :dark="darkStyle" :title="currentTip" v-else
+                >
+                  mdi-coffee-outline
+                </v-icon>
               </div>
-              <div class="tick">{{ tickTime }}</div>
+              <div class="tick" :style="{'color': (darkStyle ? 'white': '#141111')}">{{ tickTime }}</div>
             </div>
           </v-progress-circular>
         </div>
@@ -75,7 +83,7 @@
           <v-btn
             color="transparent"
             fab
-            dark
+            :dark="darkStyle"
             title="切换计时器"
             @click.stop="switchTimer"
           >
@@ -85,7 +93,7 @@
             color="transparent"
             fab
             large
-            dark
+            :dark="darkStyle"
             title="开始计时"
             @click.stop="startTimer"
           >
@@ -95,7 +103,7 @@
           <v-btn
             color="transparent"
             fab
-            dark
+            :dark="darkStyle"
             title="重置计时"
             @click.stop="restoreTimer"
           >
@@ -144,66 +152,65 @@ import Timer from 'timer.js'
 import {getQuoteByName} from '@/api/quote'
 import {formatSecond} from '@/util/durations'
 import {requestNotificationPermission, showNotice} from '@/util/notifications'
-import {backgroundType, quoteType, uToolsFeatureCodes} from '@/util/constants'
-import storage from '@/util/storages'
+import {backgroundType, uToolsFeatureCodes} from '@/store/constants'
+import settings from '@/store/settings'
 import {toggleFull} from 'be-full'
 import {getImageByName} from '@/api/image'
-import statistics from '@/util/statistics'
+import statistics from '@/store/statistics'
 import Dialog from '@/components/Dialog'
 import dayjs from 'dayjs'
-import {isUtools} from '@/util/platforms'
+import {isUTools} from '@/util/platforms'
+import {mapState} from 'vuex'
+import {getSubjectHexColor, hexToBrightness} from '@/util/colors'
 
 export default {
   name: 'Home',
   components: {Dialog},
   data() {
     return {
-      background: {
-        type: '',
-        val: '',
-        updateTime: ''
-      },
-      quote: {
-        content: '',
-        author: ''
-      },
-      total: 0,
       timer: {},
       tick: 0,
-      progress: 100,
       isPlaying: false,
-      clocks: [],
       status: 0,
       statusDetails: ['工作', '休息'],
+      progress: 100,
       resetTimeout: 500,
-      beforeEndTime: 15,
-      notification: {
-        whenEndOfWorkingTime: true,
-        beforeEndOfWorkingTime: false,
-        whenEndOfRestingTime: true
-      },
+      notifyBeforeEndOfTime: 15,
+      backgroundImage: '',
+      quoteText: '',
       restoreDialog: false,
       switchClockDialog: false,
       quitClockToSettingDialog: false,
       quitClockToStatisticDialog: false,
-      switchDialogAndStart: false
+      switchDialogAndStart: false,
+      darkStyle: true
     }
   },
   computed: {
+    ...mapState({
+      background: state => state.background,
+      quote: state => state.quote,
+      workingTime: state => state.workingTime,
+      restingTime: state => state.restingTime,
+      notification: state => state.notification
+    }),
     tickTime() {
       return formatSecond(this.tick)
+    },
+    ratio() {
+      return 100 / this.totalTime
     },
     bgColor() {
       return this.background.type === backgroundType.COLOR ? this.background.val : ''
     },
     bgImage() {
-      return this.background.type === backgroundType.UNSPLASH
-      || this.background.type === backgroundType.IMAGE
-      || this.background.type === backgroundType.SHANBAY
-      || this.background.type === backgroundType.BING ? this.background.val : ''
+      return this.background.type !== backgroundType.COLOR ? this.backgroundImage : ''
     },
     currentTip() {
       return this.statusDetails[this.status]
+    },
+    totalTime() {
+      return this.status ? this.restingTime : this.workingTime
     },
     isWorkingTime() {
       return this.status === 0
@@ -212,36 +219,38 @@ export default {
       return this.status === 1
     },
     isUtools() {
-      return isUtools()
+      return isUTools()
     }
   },
   created() {
-    this.initState()
     requestNotificationPermission()
+    this.getImage()
+    this.getQuote()
   },
   mounted() {
     window.document.documentElement.style.overflowY = 'hidden'
 
     const that = this
-    this.tick = this.total
+
+    this.tick = this.totalTime
     this.timer = new Timer({
       tick: 1,
       ontick(ms) {
         that.tick = Math.round(ms / 1000)
-        that.progress -= 100 / that.total
+        that.progress -= that.ratio
         if (that.status === 0 && that.notification.beforeEndOfWorkingTime &&
-          that.tick === that.beforeEndTime) {
+          that.tick === that.notifyBeforeEndOfTime) {
           showNotice('准备休息啦', 3000)
         }
       },
       onstop() {
-        that.tick = that.total
+        that.tick = that.totalTime
         that.progress = 100
         that.isPlaying = false
       },
       onend() {
         if (that.status === 0 && that.notification.whenEndOfWorkingTime) {
-          showNotice('休息一下吧')
+          showNotice('工作结束了，休息一下吧')
         }
         if (that.status === 1 && that.notification.whenEndOfRestingTime) {
           showNotice('休息结束啦')
@@ -251,18 +260,18 @@ export default {
         that.isPlaying = false
 
         if (that.isWorkingTime) {
-          statistics.add(that.currentTip, that.total / 60)
+          statistics.add(that.currentTip, that.totalTime / 60)
         }
         that.switchClock()
 
         setTimeout(() => {
-          that.tick = that.total
+          that.tick = that.totalTime
           that.progress = 100
         }, that.resetTimeout)
       }
     })
 
-    if (isUtools()) {
+    if (isUTools()) {
       this.uToolsMode()
     }
   },
@@ -270,65 +279,37 @@ export default {
     this.timer.stop()
   },
   methods: {
-    initState() {
-      const now = dayjs().format('YYYY年M月D日')
-      const background = this.$store.getters.getBackground
-      if (background) {
-        if ((background.type === backgroundType.UNSPLASH
-            || background.type === backgroundType.SHANBAY
-            || background.type === backgroundType.BING)
-          && background.updateTime !== now) {
-          this.getImage(background.type, now)
-        } else {
-          this.background = background
-        }
-      } else {
-        storage.initData()
-        this.getImage(backgroundType.UNSPLASH, now)
-      }
-
-      let quote = this.$store.getters.getQuote
-      if (this.$store.getters.getQuote) {
-        if (quote.type === quoteType.HITOKOTO || quote.type === quoteType.SHANBAY) {
-          this.getQuote(this.$store.getters.getQuote.type)
-        } else if (quote.type === quoteType.CUSTOM) {
-          this.quote = {content: quote.val}
-        }
-      } else {
-        this.getQuote(quoteType.HITOKOTO)
-      }
-
-      this.clocks.push(this.$store.getters.getWorkingTime ? this.$store.getters.getWorkingTime : 45 * 60)
-      this.clocks.push(this.$store.getters.getRestingTime ? this.$store.getters.getRestingTime : 5 * 60)
-      this.total = this.clocks[this.status]
-
-      if (this.$store.getters.getNotification) {
-        this.notification = this.$store.getters.getNotification
-      }
+    changeColor(bgHexColor) {
+      this.darkStyle = hexToBrightness(bgHexColor) <= 0.7
     },
-    getImage(name, date) {
-      getImageByName(name).then(data => {
-        this.background = {
-          type: name,
-          val: data,
-          updateTime: date
-        }
+    getImage() {
+      if (this.bgColor) {
+        this.changeColor(this.bgColor)
+        return
+      }
 
-        this.$store.commit('SET_BACKGROUND_BUILTIN', [name, this.background])
+      settings.getAttachment(this.background.type).then(res => {
+        if (!res.data || this.background.type === backgroundType.IMAGE || this.background.updateTime !== dayjs().format('YYYYMMDD')) {
+          getImageByName(this.background.type).then(data => {
+            // 图片缓存
+            settings.setAttachment(this.background.type, data)
+              .then(() => {
+                getSubjectHexColor(data).then(res => this.changeColor(res))
+                this.backgroundImage = data
+                this.$store.commit('UPDATE_BACKGROUND', [this.background.type])
+              })
+          })
+          return
+        }
+        getSubjectHexColor(res.data).then(res => this.changeColor(res))
+        this.backgroundImage = res.data
       })
     },
-    getQuote(name) {
-      getQuoteByName(name)
-        .then(data => {
-          this.quote = data
-        })
+    getQuote() {
+      getQuoteByName(this.quote.type).then(data => this.quoteText = data['content'])
     },
     switchTimer() {
-      if (this.isPlaying) {
-        this.switchClockDialog = true
-      } else {
-        this.switchClock()
-      }
+      this.isPlaying ? this.switchClockDialog = true : this.switchClock()
     },
     switchDialogOk() {
       this.timer.stop()
@@ -340,11 +321,7 @@ export default {
       }
     },
     startTimer() {
-      if (this.isPlaying) {
-        this.timer.pause()
-      } else {
-        this.timer.start(this.tick)
-      }
+      this.isPlaying ? this.timer.pause() : this.timer.start(this.tick)
       this.isPlaying = !this.isPlaying
     },
     restoreTimer() {
@@ -355,47 +332,37 @@ export default {
       this.restoreDialog = false
     },
     toSetting() {
-      if (this.isPlaying) {
-        this.quitClockToSettingDialog = true
-      } else {
-        this.$router.push('/setting')
-      }
+      this.isPlaying ? this.quitClockToSettingDialog = true : this.$router.push('/setting')
     },
     quitClockToSettingDialogOk() {
       this.quitClockToSettingDialog = false
       this.$router.push('/setting')
     },
     toStatistic() {
-      if (this.isPlaying) {
-        this.quitClockToStatisticDialog = true
-      } else {
-        this.$router.push('/statistic')
-      }
+      this.isPlaying ? this.quitClockToStatisticDialog = true : this.$router.push('/statistic')
     },
     quitClockToStatisticDialogOk() {
       this.quitClockToStatisticDialog = false
       this.$router.push('/statistic')
     },
     switchClock() {
+      this.progress = 100
       this.status = (this.status + 1) % 2
-      this.total = this.clocks[this.status]
-      this.tick = this.total
+      this.tick = this.totalTime
     },
     switchToWork() {
       this.status = 0
-      this.total = this.clocks[this.status]
-      this.tick = this.total
+      this.tick = this.totalTime
     },
     switchToRest() {
       this.status = 1
-      this.total = this.clocks[this.status]
-      this.tick = this.total
+      this.tick = this.totalTime
     },
     fullBtnClick() {
       toggleFull()
     },
     uToolsMode() {
-      utools.onPluginEnter(({code, type, payload}) => {
+      utools.onPluginEnter(({code}) => {
         switch (code) {
           case uToolsFeatureCodes.Work:
             if (!this.isPlaying) {
@@ -416,9 +383,14 @@ export default {
             }
             break
           case uToolsFeatureCodes.StopOrContinue:
-            if (this.tick !== this.total) this.startTimer()
+            if (this.tick !== this.totalTime) this.startTimer()
             break
         }
+      })
+
+      utools.onPluginOut(() => {
+        this.getImage()
+        this.getQuote()
       })
     }
   }
