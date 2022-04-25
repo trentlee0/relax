@@ -1,9 +1,9 @@
 {
   "pluginName": "休息一下",
-  "description": "休息一下 - 休息提醒插件",
+  "description": "休息一下 - 休息提醒 & 白噪音 & Todo",
   "author": "Trent0",
   "version": "1.0.0",
-  "homepage": "https://github.com/trentlee0/take-a-break",
+  "homepage": "https://github.com/trentlee0/relax",
   "logo": "logo.png",
   "main": "index.html",
   "preload": "preload.js",
@@ -12,27 +12,27 @@
   },
   "features": [
     {
-      "code": "take-a-break",
-      "explain": "休息一下",
+      "code": "relax",
+      "explain": "休息一下主页",
       "cmds": [
         "休息一下",
-        "Take a Break"
+        "Relax"
       ]
     },
     {
       "code": "start-work",
-      "explain": "开始工作倒计时",
+      "explain": "开始专注倒计时",
       "cmds": [
-        "开始工作",
-        "Start to Work"
+        "开始专注计时",
+        "Start To Work"
       ]
     },
     {
       "code": "start-rest",
       "explain": "开始休息倒计时",
       "cmds": [
-        "开始休息",
-        "Start to Rest"
+        "开始休息计时",
+        "Start To Rest"
       ]
     },
     {

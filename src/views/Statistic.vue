@@ -5,10 +5,10 @@
         icon
         @click="back"
       >
-        <v-icon>mdi-arrow-left</v-icon>
+        <MyIcon>mdi-arrow-left</MyIcon>
       </v-btn>
 
-      <v-toolbar-title>工作统计</v-toolbar-title>
+      <v-toolbar-title>统计</v-toolbar-title>
 
       <v-spacer></v-spacer>
     </v-toolbar>
@@ -24,9 +24,9 @@
       color="primary"
       @click="toTop"
     >
-      <v-icon dark>
+      <MyIcon dark>
         mdi-arrow-up
-      </v-icon>
+      </MyIcon>
     </v-btn>
 
 
@@ -34,117 +34,185 @@
       v-model="tab"
       centered
     >
-      <v-tab
-        v-for="item in tabs"
-        :key="item"
-      >
-        {{ item }}
+      <v-tab key="时间线">
+        时间线
+      </v-tab>
+      <v-tab key="近7天专注时长">
+        近7天专注时长
       </v-tab>
     </v-tabs>
 
     <v-tabs-items v-model="tab">
-      <div v-if="!isEmpty">
-        <v-tab-item>
-          <v-card
-            flat
-            class="ma-auto"
-            max-width="600">
-
+      <v-tab-item>
+        <v-card
+          v-if="isEmpty"
+          flat
+          class="ma-auto"
+          max-width="1000">
+          <div class="text-center pa-15">暂无数据</div>
+        </v-card>
+        <v-card
+          v-else
+          flat
+          class="ma-auto"
+          max-width="600"
+        >
+          <v-fade-transition>
             <v-timeline
               align-top
               dense
+              v-show="!isCompleted"
             >
-              <div v-for="(value, i) in dayGroupsPagination" :key="i">
+              <div v-for="index in 3" :key="index">
                 <v-timeline-item
                   class="mb-6"
                 >
 
-                  <div><strong>{{ value[0] }}</strong></div>
-                  <div>工作了 {{ formatMinute(value[1].sum) }}</div>
+                  <div>
+                    <v-skeleton-loader
+                      class=""
+                      max-width="300"
+                      type="heading"
+                    ></v-skeleton-loader>
+                  </div>
+
+                  <div>
+                    <v-skeleton-loader
+                      class="mt-2"
+                      max-width="300"
+                      type="text"
+                    ></v-skeleton-loader>
+                  </div>
                 </v-timeline-item>
 
                 <v-timeline-item
                   small
-                  v-for="(item, j) in value[1].data"
+                  v-for="j in 3"
                   :key="j"
                 >
                   <v-row class="pt-1">
                     <v-col cols="6">
-                      {{ formatTime(item.startTime) }} -
-                      {{ formatTimeAddMinute(item.startTime, item.duration) }}
+                      <v-skeleton-loader
+                        class="mt-1"
+                        max-width="150"
+                        type="text"
+                      ></v-skeleton-loader>
                     </v-col>
+                    <v-spacer></v-spacer>
                     <v-col cols="5" class="text-right">
-                      <strong>{{ item.name }}</strong>&nbsp;
-                      <v-icon>mdi-laptop</v-icon>
+                      <v-skeleton-loader
+                        class="mt-1 float-right"
+                        type="chip"
+                      ></v-skeleton-loader>
                     </v-col>
                     <v-col cols="6">
                       <div class="text-caption">
-                        {{ item.duration }} m
+                        <v-skeleton-loader
+                          class="mt-1"
+                          max-width="50"
+                          type="text"
+                        ></v-skeleton-loader>
                       </div>
                     </v-col>
                   </v-row>
                 </v-timeline-item>
               </div>
             </v-timeline>
-          </v-card>
-        </v-tab-item>
-        <v-tab-item>
-          <v-card
-            flat
-            class="ma-auto"
-            max-width="1000"
+          </v-fade-transition>
+
+          <v-timeline
+            align-top
+            dense
           >
-            <v-card-title>
-              <v-icon
-                class="mr-12"
-                color="primary"
-                size="64"
+            <div v-for="(value, key, index) in dayGroups" v-if="index < maxLength" :key="index">
+              <v-timeline-item
+                class="mb-6"
               >
-                mdi-laptop
-              </v-icon>
-              <v-row align="start">
-                <div class="text-caption grey--text text-uppercase">
-                  平均每天
-                </div>
-                <div>
+
+                <div><strong>{{ key }}</strong></div>
+                <div>专注了 {{ formatMinute(value.workSum) }}，休息了 {{ formatMinute(value.restSum) }}</div>
+              </v-timeline-item>
+
+              <v-timeline-item
+                small
+                v-for="(item, j) in value.items"
+                :key="j"
+              >
+                <v-row class="pt-1">
+                  <v-col cols="6">
+                    {{ formatTime(item.startTime) }} -
+                    {{ formatTimeAddMinute(item.startTime, item.duration) }}
+                  </v-col>
+                  <v-col cols="5" class="text-right">
+                    <strong>{{ item.name }}</strong>&nbsp;
+                    <MyIcon v-if="isWork(item.status)">mdi-laptop</MyIcon>
+                    <MyIcon v-else>mdi-coffee-outline</MyIcon>
+                  </v-col>
+                  <v-col cols="6">
+                    <div class="text-caption">
+                      {{ item.duration }} m
+                    </div>
+                  </v-col>
+                </v-row>
+              </v-timeline-item>
+            </div>
+          </v-timeline>
+        </v-card>
+      </v-tab-item>
+
+      <v-tab-item>
+        <v-card
+          flat
+          class="ma-auto"
+          max-width="1000"
+        >
+          <v-card-title>
+            <MyIcon
+              class="mr-12"
+              color="primary"
+              size="64"
+            >
+              mdi-laptop
+            </MyIcon>
+            <v-row align="start">
+              <div class="text-caption grey--text text-uppercase">
+                平均每天
+              </div>
+              <div>
                 <span
                   class="text-h3 font-weight-black"
                   v-text="minutesAvg || '—'"
                 ></span>
-                  <strong v-if="minutesAvg">MIN</strong>
-                </div>
-              </v-row>
-            </v-card-title>
-            <v-card-text>
-              <v-sheet elevation="2" class="pa-6">
-                <v-sparkline
-                  :labels="dailyMinuteLabels"
-                  :value="dailyMinutes"
-                  line-width="1"
-                  padding="10"
-                  stroke-linecap="round"
-                  gradient-direction="top"
-                  type="trend"
-                  auto-draw
-                  auto-line-width
-                  label-size="5"
-                  smooth
-                >
-                </v-sparkline>
-              </v-sheet>
-            </v-card-text>
-
-            <v-card-text>
-              <div class="text-h4 font-weight-thin text-center">
-                最近7天工作时长
+                <strong v-if="minutesAvg">MIN</strong>
               </div>
-            </v-card-text>
-          </v-card>
-        </v-tab-item>
-      </div>
-      <div v-else>
-        <div class="text-center pa-15">暂无数据</div>
-      </div>
+            </v-row>
+          </v-card-title>
+          <v-card-text>
+            <v-sheet elevation="2" class="pa-6">
+              <v-sparkline
+                :labels="dailyMinuteLabels"
+                :value="dailyMinutes"
+                line-width="1"
+                padding="10"
+                stroke-linecap="round"
+                gradient-direction="top"
+                type="trend"
+                auto-draw
+                auto-line-width
+                label-size="5"
+                smooth
+              >
+              </v-sparkline>
+            </v-sheet>
+          </v-card-text>
+
+          <v-card-text>
+            <div class="text-h4 font-weight-thin text-center">
+              最近7天专注时长
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-tab-item>
     </v-tabs-items>
   </div>
 </template>
@@ -153,30 +221,34 @@
 import statistics from '@/store/statistics'
 import {formatMinute} from '@/util/durations'
 import dayjs from 'dayjs'
-import customParseFormat from 'dayjs/plugin/customParseFormat'
-
-dayjs.extend(customParseFormat)
+import {clockStatus} from '@/config/constants'
+import MyIcon from '@/components/MyIcon'
 
 export default {
   name: 'Statistic',
+  components: {MyIcon},
   data() {
     return {
       tab: null,
-      tabs: ['时间线', '近7天统计'],
-      dayGroups: [],
+      tabs: ['时间线', '近7天专注时长'],
+      dayGroups: {},
       dailyMinutes: [],
       dailyMinuteLabels: [],
-      isEmpty: true,
       currentPage: 0,
-      pageSize: 7
+      pageSize: 14,
+      isCompleted: false,
+      isEmpty: false
     }
   },
   computed: {
-    dayGroupsPagination() {
-      return this.dayGroups.slice(0, Math.min(this.dayGroups.length, (this.currentPage + 1) * this.pageSize))
+    maxLength() {
+      return Math.min(this.dayGroupsLength, (this.currentPage + 1) * this.pageSize)
+    },
+    dayGroupsLength() {
+      return Object.keys(this.dayGroups).length
     },
     pageTotal() {
-      return this.dayGroups.length / this.pageSize
+      return this.dayGroupsLength / this.pageSize
     },
     minutesAvg() {
       const sum = this.dailyMinutes.reduce((acc, cur) => acc + cur, 0)
@@ -187,28 +259,18 @@ export default {
   },
   created() {
     const dateFormat = 'YYYY年MM月DD日'
-    statistics.listGroupByDay(dateFormat)
+    statistics.getStatisticData(dateFormat)
       .then(res => {
         const data = res.data
-        if (data) this.isEmpty = false
+        if (!data || !data.allDayGroups) this.isEmpty = true
 
-        this.dayGroups = Object.entries(data)
-          .sort((a, b) => a[0] > b[0] ? 1 : -1)
-          .reverse()
-
-        const before7day = dayjs().subtract(7, 'd')
-        this.dailyMinutes = new Array(7).fill(0, 0, 7)
-        this.dayGroups
-          .slice(0, 7)
-          .forEach((value) => {
-            const i = dayjs(value[0], dateFormat).diff(before7day, 'day')
-            this.dailyMinutes[i] = value[1].sum
-          })
-        this.dailyMinuteLabels = this.dailyMinutes.map(e => e + 'min')
-        this.dailyMinuteLabels[0] = 'Before'
-
+        this.dayGroups = data.allDayGroups
+        this.dailyMinutes = data.last7daysDurations
+        this.dailyMinuteLabels = data.last7daysDurations.map(item => item + 'min')
         this.dailyMinutes.splice(0, 0, 0)
         this.dailyMinuteLabels.splice(0, 0, 'Before')
+
+        this.isCompleted = true
       })
   },
   mounted() {
@@ -239,6 +301,9 @@ export default {
     },
     toTop() {
       scrollTo(0, 0)
+    },
+    isWork(status) {
+      return status === clockStatus.WORK
     }
   }
 }

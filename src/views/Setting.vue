@@ -5,7 +5,7 @@
         icon
         @click="back"
       >
-        <v-icon>mdi-arrow-left</v-icon>
+        <MyIcon>mdi-arrow-left</MyIcon>
       </v-btn>
 
       <v-toolbar-title>设置</v-toolbar-title>
@@ -17,7 +17,7 @@
         title="保存"
         @click="save"
       >
-        <v-icon>mdi-content-save-outline</v-icon>
+        <MyIcon>mdi-content-save-outline</MyIcon>
       </v-btn>
     </v-toolbar>
 
@@ -32,13 +32,13 @@
       color="primary"
       @click="toTop"
     >
-      <v-icon dark>
+      <MyIcon dark>
         mdi-arrow-up
-      </v-icon>
+      </MyIcon>
     </v-btn>
 
     <Dialog
-      title="是否删除设置数据？"
+      title="是否重置设置？"
       :show="deleteSettingDialog"
       @confirm="deleteSettingDialogOk"
       @cancel="deleteSettingDialog = false"
@@ -58,7 +58,7 @@
       :value="true"
       color="success"
     >
-      <v-icon>mdi-check-circle-outline</v-icon>
+      <MyIcon>mdi-check-circle-outline</MyIcon>
       <strong class="pl-2"> {{ successSnackbarMsg }}</strong>
     </v-snackbar>
 
@@ -80,7 +80,7 @@
         <v-list-item>
           <v-list-item-title style="height: 95px">
             <v-subheader class="pl-0">
-              工作时长：{{ workingTime }} 分
+              专注时长：{{ workingTime }} 分
             </v-subheader>
             <v-slider
               v-model="workingTime"
@@ -118,14 +118,14 @@
         <v-list-item>
           <v-switch
             v-model="notification.whenEndOfWorkingTime"
-            label="工作结束发送通知"
+            label="专注结束发送通知"
           ></v-switch>
         </v-list-item>
 
         <v-list-item>
           <v-switch
             v-model="notification.beforeEndOfWorkingTime"
-            label="工作结束前 15 秒发送通知"
+            label="专注结束前 15 秒发送通知"
           ></v-switch>
         </v-list-item>
 
@@ -160,7 +160,8 @@
             <v-col cols="6">
               <div v-if="isCustomQuote">
                 <v-text-field
-                  label="引言"
+                  label="请输入引言"
+                  autofocus
                   v-model="customQuote"
                   solo
                 ></v-text-field>
@@ -171,7 +172,7 @@
 
         <v-list-item>
           <v-list-item-content>
-            <v-subheader class="pl-0">背景</v-subheader>
+            <v-subheader class="pl-0">背景来源</v-subheader>
 
             <v-col cols="12">
               <v-select
@@ -202,10 +203,11 @@
                       v-model="imageSizeValid"
                       lazy-validation
                     >
+                      <!--TODO 改ICON-->
                       <v-file-input
                         :rules="rules"
                         accept="image/png"
-                        prepend-icon="mdi-file-image"
+                        :prepend-icon="$vuetify.icons.values['mdi-file-image']"
                         label="选择背景图片"
                         @click:clear="clearImageFile"
                         @change="selectImageFile"
@@ -217,6 +219,27 @@
                       :src="bgImage"
                       class="white--text align-end"
                       :gradient="!bgImage || !bgImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
+                      height="250px"
+                    >
+                    </v-img>
+                  </v-card>
+                </v-col>
+              </div>
+
+              <div v-else-if="isNetworkImage">
+                <v-col>
+                  <v-text-field
+                    v-model="networkImage"
+                    label="图片地址"
+                    menu-props="auto"
+                    solo
+                    @input="changeNetworkImage"
+                  ></v-text-field>
+                  <v-card>
+                    <v-img
+                      :src="networkImage"
+                      class="white--text align-end"
+                      :gradient="!networkImage || !networkImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
                       height="250px"
                     >
                     </v-img>
@@ -236,7 +259,7 @@
         three-line
       >
         <v-subheader class="font-weight-bold">导入</v-subheader>
-
+        <small class="ml-5 text-caption">* 会覆盖原数据</small>
         <v-list-item>
           <v-list-item-content>
             <v-row>
@@ -272,13 +295,14 @@
               </v-col>
               <v-col cols="6">
                 <v-btn class="mt-1" color="primary" @click="importStatistic">
-                  开始确认
+                  开始导入
                 </v-btn>
               </v-col>
             </v-row>
           </v-list-item-content>
         </v-list-item>
       </v-list>
+
 
       <v-divider></v-divider>
 
@@ -290,8 +314,8 @@
         <v-subheader class="font-weight-bold">导出</v-subheader>
 
         <v-list-item>
-          <v-list-item-content>
-            <v-btn class="mt-2" color="primary" large @click="exportSetting">
+          <v-list-item-content class="ml-2 mr-2">
+            <v-btn color="primary" large @click="exportSetting">
               导出设置数据
             </v-btn>
 
@@ -312,9 +336,9 @@
         <v-subheader class="font-weight-bold">删除</v-subheader>
 
         <v-list-item>
-          <v-list-item-content>
-            <v-btn class="mt-2" large color="error" @click="deleteSetting">
-              删除设置数据
+          <v-list-item-content class="ml-2 mr-2">
+            <v-btn large color="error" @click="deleteSetting">
+              重置设置
             </v-btn>
 
             <v-btn class="mt-5" large color="error" @click="deleteStatistic">
@@ -332,25 +356,27 @@ import {
   backgroundChinese,
   backgroundType,
   quoteType,
-  quoteChinese
-} from '@/store/constants'
+  quoteChinese, crossDomainBackground, crossDomainQuote
+} from '@/config/constants'
 import {isUTools} from '@/util/platforms'
 import Dialog from '@/components/Dialog'
 import settings from '@/store/settings'
 import statistics from '@/store/statistics'
 import {arrayBufferToBase64ImagePNG} from '@/util/requests'
 import {mapState} from 'vuex'
+import MyIcon from '@/components/MyIcon'
 
 export default {
   name: 'Setting',
-  components: {Dialog},
+  components: {Dialog, MyIcon},
   data() {
     return {
       quoteSourceSelectedItem: '',
       customQuote: '',
       backgroundSelectedItem: '',
-      bgColor: '',
+      bgColor: '#616161',
       bgImage: '',
+      networkImage: '',
       successSnackbar: false,
       successSnackbarMsg: '',
       errorSnackbar: false,
@@ -363,40 +389,42 @@ export default {
       ],
       imageSizeValid: true,
       importSettingFile: null,
-      importStatisticFile: null
+      importStatisticFile: null,
+      workingTime: 0,
+      restingTime: 0
     }
   },
   computed: {
     ...mapState({
       background: state => state.background,
       quote: state => state.quote,
-      workingTime: state => state.workingTime / 60,
-      restingTime: state => state.restingTime / 60,
+      workingTimeFromStore: state => state.workingTime / 60,
+      restingTimeFromStore: state => state.restingTime / 60,
       notification: state => state.notification
     }),
     quoteSourceItems() {
       return Object
         .values(quoteType)
-        .filter(value => isUTools() ? true : value !== quoteType.SHANBAY)
+        .filter(value => isUTools() ? true : crossDomainQuote.indexOf(value) === -1)
         .map(value => quoteChinese[value])
     },
     backgroundTypeItems() {
       return Object
         .values(backgroundType)
-        .filter(value => isUTools() ? true : value !== backgroundType.SHANBAY)
+        .filter(value => isUTools() ? true : crossDomainBackground.indexOf(value) === -1)
         .map(value => backgroundChinese[value])
     },
     isImage() {
       return this.backgroundSelectedItem === backgroundChinese.image
+    },
+    isNetworkImage() {
+      return this.backgroundSelectedItem === backgroundChinese.network
     },
     isColor() {
       return this.backgroundSelectedItem === backgroundChinese.color
     },
     isCustomQuote() {
       return this.quoteSourceSelectedItem === quoteChinese.custom
-    },
-    isUtools() {
-      return isUTools()
     }
   },
   created() {
@@ -407,15 +435,22 @@ export default {
   },
   methods: {
     initState() {
+      this.workingTime = this.workingTimeFromStore
+      this.restingTime = this.restingTimeFromStore
       this.backgroundSelectedItem = backgroundChinese[this.background.type]
       this.quoteSourceSelectedItem = quoteChinese[this.quote.type]
 
-      if (this.background.type === backgroundType.COLOR) this.bgColor = this.background.val
+      if (this.$store.state.quote.val) this.customQuote = this.$store.state.quote.val
 
-      settings.getAttachment(backgroundType.IMAGE)
-        .then(res => {
-          this.bgImage = res.data
-        })
+      if (this.background.val) {
+        if (this.background.type === backgroundType.COLOR)
+          this.bgColor = this.background.val
+        else if (this.background.type === backgroundType.NETWORK)
+          this.networkImage = this.background.val
+      }
+
+      settings.getTempCache(backgroundType.IMAGE)
+        .then(res => this.bgImage = res.data)
     },
     back() {
       this.$router.replace('/')
@@ -432,6 +467,9 @@ export default {
             break
           case backgroundType.IMAGE:
             this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.bgImage])
+            break
+          case backgroundType.NETWORK:
+            this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.networkImage])
             break
           default:
             this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType])
@@ -459,17 +497,11 @@ export default {
     },
     deleteSettingDialogOk() {
       this.$store.commit('RESET')
-      settings.removeAttachment(backgroundType.BING).then(() => {
-        settings.removeAttachment(backgroundType.SHANBAY).then(() => {
-          settings.removeAttachment(backgroundType.UNSPLASH).then(() => {
-            settings.removeAttachment(backgroundType.IMAGE).then(() => {
-              this.initState()
-              this.deleteSettingDialog = false
-              this.showSuccessSnackBar('删除成功')
-            }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
-          }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
-        }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
-      }).catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
+      settings.clearTempCache().then(() => {
+        this.initState()
+        this.deleteSettingDialog = false
+        this.showSuccessSnackBar('重置成功')
+      }).catch(err => this.showErrorSnackBar('重置失败，原因：' + err.message))
     },
     deleteStatistic() {
       this.deleteStatisticDialog = true
@@ -495,6 +527,12 @@ export default {
       reader.onload = () => {
         if (this.imageSizeValid) this.bgImage = arrayBufferToBase64ImagePNG(reader.result)
       }
+    },
+    changeNetworkImage() {
+      this.networkImage = this.networkImage ? this.networkImage.trim() : ' '
+      setTimeout(() => {
+        this.networkImage = this.networkImage === ' ' ? '' : this.networkImage
+      }, 200)
     },
     clearImageFile() {
       this.bgImage = ' '

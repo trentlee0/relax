@@ -1,4 +1,4 @@
-import logoImg from '@/assets/logo.png'
+import image from '/public/logo.png'
 import {isUTools} from '@/util/platforms'
 
 export function requestNotificationPermission() {
@@ -18,12 +18,12 @@ export function requestNotificationPermission() {
 
 export function showNotice(content, closeTimeout) {
   if (isUTools()) {
-    utools.showNotification(content, 'take-a-break')
+    utools.showNotification(content, 'relax')
   } else {
-    const N = new Notification('Take A Break', {
+    const N = new Notification('Relax', {
       body: content,
-      tag: 'tabn',
-      icon: logoImg,
+      tag: 'relax',
+      icon: image,
       requireInteraction: true
     })
     if (closeTimeout) {

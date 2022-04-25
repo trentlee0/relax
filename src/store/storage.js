@@ -1,5 +1,4 @@
-import FileSaver from 'file-saver'
-import * as localforage from 'localforage'
+import localforage from 'localforage'
 
 /**
  * 异步返回成功消息
@@ -35,6 +34,7 @@ export class SuccessMsg {
 export class Storage {
   /**
    * 异步获取
+   * 注意：浏览器中使用 localforage，与同步方法使用的数据库不同
    * @param {string} key
    * @return {Promise<SuccessMsg>}
    */
@@ -43,7 +43,29 @@ export class Storage {
   }
 
   /**
+   * 异步设置值
+   * 注意：浏览器中使用 localforage，与同步方法使用的数据库不同
+   * @param {string} key
+   * @param {Object} value
+   * @return {Promise<SuccessMsg>}
+   */
+  set(key, value) {
+    throw new Error('Abstract method!')
+  }
+
+  /**
+   * 异步删除
+   * 注意：浏览器中使用 localforage，与同步方法使用的数据库不同
+   * @param {string} key
+   * @return {Promise<SuccessMsg>}
+   */
+  remove(key) {
+    throw new Error('Abstract method!')
+  }
+
+  /**
    * 同步获取
+   * 注意：浏览器中使用 localStorage，与异步方法使用的数据库不同
    * @param {string} key
    * @return Object
    */
@@ -52,64 +74,19 @@ export class Storage {
   }
 
   /**
-   * 设置附件
-   * @param {string} key
-   * @param {string} attachment
-   * @return {Promise<SuccessMsg>}
-   */
-  setAttachment(key, attachment) {
-    throw new Error('Abstract method!')
-  }
-
-  /**
-   * 获取附件
-   * @param {string} key
-   * @return {Promise<SuccessMsg>}
-   */
-  getAttachment(key) {
-    throw new Error('Abstract method!')
-  }
-
-  /**
-   * 删除附件
-   * @param {string} key
-   * @return {Promise<SuccessMsg>}
-   */
-  removeAttachment(key) {
-    throw new Error('Abstract method!')
-  }
-
-  /**
-   * 异步设置值
-   * @param {string} key
-   * @param {Object} value
-   * @return {Promise<SuccessMsg>}
-   */
-  set(key, value) {
-    throw new Error('Abstract method!')
-  }
-
-  /**
    * 同步设置值
+   * 注意：浏览器中使用 localStorage，与异步方法使用的数据库不同
    * @param {string} key
    * @param {Object} value
    * @return {void}
    */
   setSync(key, value) {
-    throw new Error('Abstract method!')
-  }
-
-  /**
-   * 异步删除
-   * @param {string} key
-   * @return {Promise<SuccessMsg>}
-   */
-  remove(key) {
     throw new Error('Abstract method!')
   }
 
   /**
    * 同步删除
+   * 注意：浏览器中使用 localStorage，与异步方法使用的数据库不同
    * @param {string} key
    * @return {void}
    */
@@ -118,176 +95,75 @@ export class Storage {
   }
 
   /**
-   * 获取大文档
-   * @param key
+   * 获取临时存储数据
+   * @param {string} key
    * @return {Promise<SuccessMsg>}
    */
-  getLargeDoc(key) {
+  getTempCache(key) {
     throw new Error('Abstract method!')
   }
 
   /**
-   * 设置大文档
-   * @param key
-   * @param value
+   * 设置临时存储数据
+   * @param {string} key
+   * @param {Object} attachment
    * @return {Promise<SuccessMsg>}
    */
-  setLargeDoc(key, value) {
+  setTempCache(key, attachment) {
     throw new Error('Abstract method!')
   }
 
   /**
-   * 删除大文档
-   * @param key
+   * 删除临时存储数据
+   * @param {string} key
    * @return {Promise<SuccessMsg>}
    */
-  removeLargeDoc(key) {
+  removeTempCache(key) {
     throw new Error('Abstract method!')
   }
 
   /**
-   * 导出为 JSON 字符串
-   * @param {Object} data 数据源
-   * @param {string} filename 导出的文件名
+   * 匹配键前缀获取所有，返回键值对。获取 set() 、setSync() 设置的值
+   * @param {string} likeKey
    * @return {Promise<SuccessMsg>}
    */
-  static exportJSON(data, filename) {
-    return new Promise((resolve, reject) => {
-      try {
-        let dataStr = JSON.stringify(data, null, 2)
-        let blob = new Blob([dataStr], {type: 'application/json'})
-        FileSaver.saveAs(blob, filename)
-        resolve(SuccessMsg.emptyInstance())
-      } catch (err) {
-        reject(err)
-      }
-    })
+  queryLikeAsObject(likeKey) {
+    throw new Error('Abstract method!')
   }
 
   /**
-   * 导入 JSON 数据为 JS 对象
-   * @param {File} file
+   * 匹配键前缀获取所有，返回数组。获取 set() 、setSync() 设置的值
+   * @param {string} likeKey
    * @return {Promise<SuccessMsg>}
    */
-  static importJSON(file) {
-    return new Promise((resolve, reject) => {
-      try {
-        const reader = new FileReader()
-        reader.readAsText(file)
-        reader.onload = () => resolve(SuccessMsg.instance(JSON.parse(reader.result)))
-      } catch (err) {
-        reject(err)
-      }
-    })
+  queryLikeAsArray(likeKey) {
+    throw new Error('Abstract method!')
   }
 
   /**
-   * Uint8Array 类型转换为字符串类型
-   * @param {Uint8Array} fileData
-   * @return {string}
+   * 匹配键前缀删除所有
+   * @param {string} likeKey
+   * @return {Promise<SuccessMsg>}
    */
-  static uint8ArrayToString(fileData) {
-    let dataString = ''
-    for (let i = 0; i < fileData.length; i++) {
-      dataString += String.fromCharCode(fileData[i])
-    }
-    return dataString
-  }
-
-
-  /**
-   * 字符串类型转换为 Uint8Array 类型
-   * @param str
-   * @return {Uint8Array}
-   */
-  static stringToUint8Array(str) {
-    let arr = []
-    for (let i = 0; i < str.length; i++) {
-      arr.push(str.charCodeAt(i))
-    }
-    return new Uint8Array(arr)
+  removeLike(likeKey) {
+    throw new Error('Abstract method!')
   }
 }
-
 
 export class BrowserStorage extends Storage {
   get(key) {
     return new Promise((resolve, reject) => {
       try {
-        resolve(SuccessMsg.instance(JSON.parse(localStorage.getItem(key))))
+        localforage.getItem(key)
+          .then(data => resolve(SuccessMsg.instance(data)))
+          .catch(err => reject(err))
       } catch (err) {
         reject(err)
       }
     })
-  }
-
-  getSync(key) {
-    return JSON.parse(localStorage.getItem(key))
   }
 
   set(key, value) {
-    return new Promise((resolve, reject) => {
-      try {
-        localStorage.setItem(key, JSON.stringify(value))
-        resolve(SuccessMsg.emptyInstance())
-      } catch (err) {
-        reject(err)
-      }
-    })
-  }
-
-  setSync(key, value) {
-    localStorage.setItem(key, JSON.stringify(value))
-  }
-
-  getAttachment(key) {
-    return new Promise((resolve, reject) => {
-      localforage.getItem(key)
-        .then(data => resolve(SuccessMsg.instance(data ? data : '')))
-        .catch(err => reject(err))
-    })
-  }
-
-  setAttachment(key, attachment) {
-    return new Promise((resolve, reject) => {
-      localforage.setItem(key, attachment)
-        .then(() => resolve(SuccessMsg.instance(SuccessMsg.emptyInstance())))
-        .catch(err => reject(err))
-    })
-  }
-
-  removeAttachment(key) {
-    return new Promise((resolve, reject) => {
-      localforage.removeItem(key)
-        .then(() => resolve(SuccessMsg.instance(SuccessMsg.emptyInstance())))
-        .catch(err => reject(err))
-    })
-  }
-
-  remove(key) {
-    return new Promise((resolve, reject) => {
-      try {
-        localStorage.removeItem(key)
-        resolve(SuccessMsg.emptyInstance())
-      } catch (err) {
-        reject(err)
-      }
-    })
-  }
-
-  removeSync(key) {
-    localStorage.removeItem(key)
-  }
-
-  getLargeDoc(key) {
-    return new Promise((resolve, reject) => {
-      localforage.getItem(key)
-        .then(data => resolve(SuccessMsg.instance(data)))
-        .catch(err => reject(err))
-    })
-  }
-
-  setLargeDoc(key, value) {
     return new Promise((resolve, reject) => {
       localforage.setItem(key, value)
         .then(() => resolve(SuccessMsg.emptyInstance()))
@@ -295,11 +171,72 @@ export class BrowserStorage extends Storage {
     })
   }
 
-  removeLargeDoc(key) {
+  remove(key) {
     return new Promise((resolve, reject) => {
       localforage.removeItem(key)
         .then(() => resolve(SuccessMsg.emptyInstance()))
         .catch(err => reject(err))
+    })
+  }
+
+  getSync(key) {
+    return JSON.parse(localStorage.getItem(key))
+  }
+
+  setSync(key, value) {
+    localStorage.setItem(key, JSON.stringify(value))
+  }
+
+  removeSync(key) {
+    localStorage.removeItem(key)
+  }
+
+  getTempCache(key) {
+    return this.get(key)
+  }
+
+  setTempCache(key, attachment) {
+    return this.set(key, attachment)
+  }
+
+  removeTempCache(key) {
+    return this.remove(key)
+  }
+
+  queryLikeAsObject(likeKey) {
+    return new Promise((resolve, reject) => {
+      const data = {}
+      localforage.iterate((v, k) => {
+        if (k.startsWith(likeKey)) {
+          data[k] = {items: v}
+        }
+      }).then(() => resolve(SuccessMsg.instance(data))).catch(err => reject(err))
+    })
+  }
+
+  queryLikeAsArray(likeKey) {
+    return new Promise((resolve, reject) => {
+      const data = []
+      localforage.iterate((v, k) => {
+        if (k.startsWith(likeKey)) {
+          v.forEach(item => data.push(item))
+        }
+      }).then(() => resolve(SuccessMsg.instance(data))).catch(err => reject(err))
+    })
+  }
+
+  removeLike(likeKey) {
+    return new Promise((resolve, reject) => {
+      const ps = []
+      localforage.iterate((v, k) => {
+        if (k.startsWith(likeKey)) {
+          ps.push(localforage.removeItem(k))
+        }
+      }).then(() =>
+        Promise.all(ps)
+          .then(() => resolve(SuccessMsg.emptyInstance()))
+          .catch(err => reject(err))
+      ).catch(err => reject(err))
     })
   }
 }
@@ -316,10 +253,6 @@ export class UToolsStorage extends Storage {
     })
   }
 
-  getSync(key) {
-    return utools.dbStorage.getItem(key)
-  }
-
   set(key, value) {
     return new Promise((resolve, reject) => {
       try {
@@ -328,34 +261,6 @@ export class UToolsStorage extends Storage {
       } catch (err) {
         reject(err)
       }
-    })
-  }
-
-  setSync(key, value) {
-    utools.dbStorage.setItem(key, value)
-  }
-
-  getAttachment(key) {
-    return new Promise((resolve, reject) => {
-      localforage.getItem(key)
-        .then(data => resolve(SuccessMsg.instance(data ? data : '')))
-        .catch(err => reject(err))
-    })
-  }
-
-  setAttachment(key, attachment) {
-    return new Promise((resolve, reject) => {
-      localforage.setItem(key, attachment)
-        .then(() => resolve(SuccessMsg.instance(SuccessMsg.emptyInstance())))
-        .catch(err => reject(err))
-    })
-  }
-
-  removeAttachment(key) {
-    return new Promise((resolve, reject) => {
-      localforage.removeItem(key)
-        .then(() => resolve(SuccessMsg.instance(SuccessMsg.emptyInstance())))
-        .catch(err => reject(err))
     })
   }
 
@@ -370,19 +275,92 @@ export class UToolsStorage extends Storage {
     })
   }
 
+  getSync(key) {
+    return utools.dbStorage.getItem(key)
+  }
+
+  setSync(key, value) {
+    utools.dbStorage.setItem(key, value)
+  }
+
   removeSync(key) {
     utools.dbStorage.removeItem(key)
   }
 
-  getLargeDoc(key) {
-    return this.get(key)
+  getTempCache(key) {
+    return new Promise((resolve, reject) => {
+      localforage.getItem(key)
+        .then(data => resolve(SuccessMsg.instance(data)))
+        .catch(err => reject(err))
+    })
   }
 
-  setLargeDoc(key, value) {
-    return this.set(key, value)
+  setTempCache(key, attachment) {
+    return new Promise((resolve, reject) => {
+      localforage.setItem(key, attachment)
+        .then(() => resolve(SuccessMsg.instance(SuccessMsg.emptyInstance())))
+        .catch(err => reject(err))
+    })
   }
 
-  removeLargeDoc(key) {
-    return this.remove(key)
+  removeTempCache(key) {
+    return new Promise((resolve, reject) => {
+      localforage.removeItem(key)
+        .then(() => resolve(SuccessMsg.instance(SuccessMsg.emptyInstance())))
+        .catch(err => reject(err))
+    })
+  }
+
+  queryLikeAsObject(likeKey) {
+    return new Promise((resolve, reject) => {
+      utools.db.promises.allDocs(likeKey).then(res => {
+        try {
+          let data = {}
+          if (!res) {
+            resolve(SuccessMsg.instance(data))
+            return
+          }
+          res.forEach(item => data[item['_id']] = {items: item['value']})
+          resolve(SuccessMsg.instance(data))
+        } catch (err) {
+          reject(err)
+        }
+      }).catch(err => reject(err))
+    })
+  }
+
+  queryLikeAsArray(likeKey) {
+    return new Promise((resolve, reject) => {
+      utools.db.promises.allDocs(likeKey).then(res => {
+        try {
+          let data = []
+          if (!res) {
+            resolve(SuccessMsg.instance(data))
+            return
+          }
+          res.forEach(item => item['value'].forEach(e => data.push(e)))
+          resolve(SuccessMsg.instance(data))
+        } catch (err) {
+          reject(err)
+        }
+      }).catch(err => reject(err))
+    })
+  }
+
+  removeLike(likeKey) {
+    return new Promise((resolve, reject) => {
+      utools.db.promises.allDocs(likeKey).then(res => {
+        try {
+          if (!res) {
+            resolve(SuccessMsg.emptyInstance())
+            return
+          }
+          res.forEach(item => utools.dbStorage.removeItem(item['_id']))
+          resolve(SuccessMsg.emptyInstance())
+        } catch (err) {
+          reject(err)
+        }
+      }).catch(err => reject(err))
+    })
   }
 }

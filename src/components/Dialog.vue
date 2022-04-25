@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-dialog
-      v-model="value"
+      :value="show"
       max-width="340"
       @click:outside="no"
       @keydown="no"
@@ -43,16 +43,6 @@ export default {
     show: {
       type: Boolean,
       default: false
-    }
-  },
-  data() {
-    return {
-      value: this.show
-    }
-  },
-  watch: {
-    show(newVal, oldVal) {
-      this.value = newVal
     }
   },
   methods: {

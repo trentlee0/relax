@@ -1,6 +1,13 @@
 import {isUTools} from '@/util/platforms'
-import {backgroundType, dataKey, defaultSettings, quoteType} from '@/store/constants'
+import {
+  backgroundType,
+  crossDomainBackground,
+  crossDomainQuote,
+  dataKey,
+  defaultSettings
+} from '@/config/constants'
 import {BrowserStorage, Storage, SuccessMsg, UToolsStorage} from '@/store/storage'
+import {exportJSON, importJSON} from '@/util/files'
 
 class Setting {
   /**
@@ -21,50 +28,71 @@ class Setting {
     return this._instance
   }
 
-  get(key) {
+  getSync(key) {
     return this.storage.getSync(key)
   }
 
-  set(key, value) {
+  setSync(key, value) {
     this.storage.setSync(key, value)
   }
 
-  remove(key) {
+  removeSync(key) {
     this.storage.removeSync(key)
   }
 
-  setBulk(setting) {
-    this.set(dataKey.Background, setting[dataKey.Background])
-    this.set(dataKey.Quote, setting[dataKey.Quote])
-    this.set(dataKey.Notification, setting[dataKey.Notification])
-    this.set(dataKey.WorkingTime, setting[dataKey.WorkingTime])
-    this.set(dataKey.RestingTime, setting[dataKey.RestingTime])
+  clearSync() {
+    this.removeSync(dataKey.Background)
+    this.removeSync(dataKey.Quote)
+    this.removeSync(dataKey.Notification)
+    this.removeSync(dataKey.WorkingTime)
+    this.removeSync(dataKey.RestingTime)
+    this.removeSync(dataKey.BackgroundMusic)
   }
 
-  setAttachment(type, attachment) {
-    return this.storage.setAttachment(type, attachment)
+  setAllSync(setting) {
+    this.setSync(dataKey.Background, setting[dataKey.Background])
+    this.setSync(dataKey.Quote, setting[dataKey.Quote])
+    this.setSync(dataKey.Notification, setting[dataKey.Notification])
+    this.setSync(dataKey.WorkingTime, setting[dataKey.WorkingTime])
+    this.setSync(dataKey.RestingTime, setting[dataKey.RestingTime])
   }
 
-  getAttachment(type) {
-    return this.storage.getAttachment(type)
+  setTempCache(type, attachment) {
+    return this.storage.setTempCache('temps:' + type, attachment)
   }
 
-  removeAttachment(type) {
-    return this.storage.removeAttachment(type)
+  getTempCache(type) {
+    return this.storage.getTempCache('temps:' + type)
+  }
+
+  removeTempCache(type) {
+    return this.storage.removeTempCache('temps:' + type)
+  }
+
+  clearTempCache() {
+    return Promise.all([
+      this.removeTempCache(backgroundType.UNSPLASH),
+      this.removeTempCache(backgroundType.SHANBAY),
+      this.removeTempCache(backgroundType.BING),
+      this.removeTempCache(backgroundType.XIAOWAI),
+      this.removeTempCache(backgroundType.NETWORK),
+      this.removeTempCache(backgroundType.IMAGE)
+    ])
   }
 
   exportSettingToJSON(data) {
+    const filename = 'relax_conf.json'
     return new Promise((resolve, reject) => {
       // 处理自定义图片导出问题
       if (data.background.type === backgroundType.IMAGE) {
-        this.getAttachment(backgroundType.IMAGE).then(res => {
+        this.getTempCache(backgroundType.IMAGE).then(res => {
           data.background.val = res.data
-          Storage.exportJSON(data, 'data.json')
+          exportJSON(data, filename)
             .then(() => resolve(SuccessMsg.emptyInstance()))
             .catch(err => reject(err))
         })
       } else {
-        Storage.exportJSON(data, 'data.json')
+        exportJSON(data, filename)
           .then(() => resolve(SuccessMsg.emptyInstance()))
           .catch(err => reject(err))
       }
@@ -73,7 +101,7 @@ class Setting {
 
   importJSONToSetting(file) {
     return new Promise((resolve, reject) => {
-      Storage.importJSON(file).then(res => {
+      importJSON(file).then(res => {
         const data = res.data
         try {
           if (!data || !data.background
@@ -87,23 +115,21 @@ class Setting {
 
           // 由于跨域问题需要修改
           if (!isUTools()) {
-            if (data.background.type === backgroundType.SHANBAY)
+            if (crossDomainBackground.indexOf(data.background.type) !== -1)
               data.background = defaultSettings.background
-            if (data.quote.type === quoteType.SHANBAY)
+            if (crossDomainQuote.indexOf(data.quote.type) !== -1)
               data.quote = defaultSettings.quote
           }
 
           // 处理自定义图片导入问题
           if (data.background.type === backgroundType.IMAGE) {
-            this.setAttachment(backgroundType.IMAGE, data.background.val)
-              .then(() => {
-                data.background.val = ''
-                this.setBulk(data)
-                resolve(SuccessMsg.instance(data))
-              })
-              .catch(err => reject(err))
+            this.setTempCache(backgroundType.IMAGE, data.background.val).then(() => {
+              data.background.val = ''
+              this.setAllSync(data)
+              resolve(SuccessMsg.instance(data))
+            }).catch(err => reject(err))
           } else {
-            this.setBulk(data)
+            this.setAllSync(data)
             resolve(SuccessMsg.instance(data))
           }
         } catch (err) {

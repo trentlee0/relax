@@ -1,7 +1,12 @@
-import {dataKey} from '@/store/constants'
+import {clockStatus, dataKey} from '@/config/constants'
 import dayjs from 'dayjs'
 import {BrowserStorage, Storage, SuccessMsg, UToolsStorage} from '@/store/storage'
 import {isUTools} from '@/util/platforms'
+import collect from 'collect.js'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+import {exportJSON, importJSON} from '@/util/files'
+
+dayjs.extend(customParseFormat)
 
 class Statistic {
   /**
@@ -22,63 +27,80 @@ class Statistic {
     return this._instance
   }
 
-  add(name, minuteDuration) {
+  add(name, minuteDuration, status) {
+    const key = dataKey.Statistics + '/' + dayjs().format('YYYY/MM')
     return new Promise((resolve, reject) => {
-      this.storage.getLargeDoc(dataKey.Statistics).then(res => {
+      this.storage.get(key).then(res => {
         let data = res.data || []
         data.push({
           name: name,
           startTime: dayjs().subtract(minuteDuration, 'm').valueOf(),
-          duration: minuteDuration
+          duration: minuteDuration,
+          status: status
         })
 
-        this.storage.setLargeDoc(dataKey.Statistics, data)
+        this.storage.set(key, data)
           .then(res => resolve(res))
           .catch(err => reject(err))
       })
     })
   }
 
-  list() {
-    return this.storage.getLargeDoc(dataKey.Statistics)
-  }
-
-  listGroupByDay(dateFormat) {
+  getStatisticData(dateFormat) {
     return new Promise((resolve, reject) => {
-      this.list().then(res => {
+      this.storage.queryLikeAsArray('statistics/').then(res => {
         const data = res.data
-        if (!data) return
-
-        let temp = {}
-        data.forEach(el => {
-          let key = dayjs(el.startTime).format(dateFormat)
-          temp[key] = temp[key] || []
-          temp[key].push(el)
-        })
-        let groups = {}
-        for (let key in temp) {
-          let arr = temp[key].sort().reverse()
-          groups[key] = {
-            data: arr,
-            sum: arr.map(e => e.duration).reduce((pre, n) => pre + n)
-          }
+        if (!data) {
+          resolve(SuccessMsg.emptyInstance())
+          return
         }
-        resolve(SuccessMsg.instance(groups))
+
+        const before7day = dayjs().subtract(7, 'd')
+        const before7dayFormat = before7day.format(dateFormat)
+        const durations = new Array(7).fill(0, 0, 7)
+        const groups = collect(data)
+          .groupBy(item => dayjs(item.startTime).format(dateFormat))
+          .each((currentItem, key, collection) => {
+            collection[key] = {
+              workSum: currentItem
+                .filter(item => item.status === clockStatus.WORK)
+                .map(item => item.duration).reduce((pre, cur) => pre + cur),
+              restSum: currentItem
+                .filter(item => item.status === clockStatus.REST)
+                .map(item => item.duration).reduce((pre, cur) => pre + cur),
+              items: currentItem.sortByDesc('startTime')
+            }
+
+            const i = dayjs(key, dateFormat).diff(before7day, 'day')
+            if (i >= 0 && before7dayFormat !== key) {
+              durations[i] = collection[key].workSum ? collection[key].workSum : 0
+            }
+          })
+          .sortKeysDesc()
+
+        resolve(SuccessMsg.instance({
+          allDayGroups: Object.keys(groups.all()).length ? groups.all() : null,
+          last7daysDurations: durations
+        }))
       }).catch(err => reject(err))
     })
   }
 
   removeStatistic() {
-    return this.storage.removeLargeDoc(dataKey.Statistics)
+    return this.storage.removeLike(dataKey.Statistics)
   }
 
   exportStatisticToJSON() {
-    const filename = 'statistic.json'
+    const filename = 'relax_statistics.json'
     return new Promise((resolve, reject) => {
-      this.list().then(res => {
+      this.storage.queryLikeAsObject(dataKey.Statistics).then(res => {
         const data = res.data
-        Storage.exportJSON({[dataKey.Statistics]: data || []}, filename)
-          .then(res => resolve(res))
+        const temp = {}
+        for (let key in data) {
+          temp[key] = data[key]['items']
+        }
+        exportJSON(temp, filename)
+          .then(() => resolve(SuccessMsg.emptyInstance()))
           .catch(err => reject(err))
       }).catch(err => reject(err))
     })
@@ -86,15 +108,26 @@ class Statistic {
 
   importJSONToStatistic(file) {
     return new Promise((resolve, reject) => {
-      Storage.importJSON(file).then(res => {
+      importJSON(file).then(res => {
         try {
           const data = res.data
-          if (!data || !data[dataKey.Statistics]) {
+          if (!data) {
             reject(new Error('数据为空或无效文件'))
             return
           }
+          for (let key in data) {
+            if (!/^statistics\/\d{4}\/\d{2}$/.test(key)) {
+              reject(new Error('数据为空或无效文件'))
+              return
+            }
+          }
 
-          this.storage.setLargeDoc(dataKey.Statistics, data[dataKey.Statistics])
+          const ps = []
+          for (let key in data) {
+            const item = data[key]
+            ps.push(this.storage.set(key, item ? item : []))
+          }
+          Promise.all(ps)
             .then(() => resolve(SuccessMsg.emptyInstance()))
             .catch(err => reject(err))
         } catch (err) {

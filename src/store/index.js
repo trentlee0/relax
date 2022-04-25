@@ -1,68 +1,64 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import {backgroundType, dataKey, defaultSettings, quoteType} from '@/store/constants'
+import {backgroundType, dataKey, defaultSettings, quoteType} from '@/config/constants'
 import settings from '@/store/settings'
-import dayjs from 'dayjs'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    background: settings.get(dataKey.Background) || defaultSettings.background,
-    quote: settings.get(dataKey.Quote) || defaultSettings.quote,
-    notification: settings.get(dataKey.Notification) || defaultSettings.notification,
-    workingTime: settings.get(dataKey.WorkingTime) || defaultSettings.workingTime,
-    restingTime: settings.get(dataKey.RestingTime) || defaultSettings.restingTime
+    background: settings.getSync(dataKey.Background) || defaultSettings.background,
+    quote: settings.getSync(dataKey.Quote) || defaultSettings.quote,
+    notification: settings.getSync(dataKey.Notification) || defaultSettings.notification,
+    workingTime: settings.getSync(dataKey.WorkingTime) || defaultSettings.workingTime,
+    restingTime: settings.getSync(dataKey.RestingTime) || defaultSettings.restingTime,
+    backgroundMusic: settings.getSync(dataKey.BackgroundMusic) || defaultSettings.backgroundMusic
   },
   mutations: {
     UPDATE_BACKGROUND(state, [type, val]) {
       state.background.type = type
-      // 仅仅用户自定义图片/颜色背景才需要保存
-      if (val && type === backgroundType.COLOR) state.background.val = val
-      else state.background.val = ''
-      if (val && type === backgroundType.IMAGE) settings.setAttachment(type, val)
-      state.background.updateTime = dayjs().format('YYYYMMDD')
-      settings.set(dataKey.Background, state.background)
+      // 仅仅用户自定义图片/网络图片/颜色背景才需要保存
+      if (val) {
+        if (type === backgroundType.COLOR || type === backgroundType.NETWORK) state.background.val = val
+        else if (type === backgroundType.IMAGE) settings.setTempCache(type, val)
+        else state.background.val = ''
+      }
+      settings.setSync(dataKey.Background, state.background)
     },
     UPDATE_QUOTE(state, [type, val]) {
       state.quote.type = type
-      if (type === quoteType.CUSTOM) state.quote.val = val
-      state.quote.updateTime = dayjs().format('YYYYMMDD')
-      settings.set(dataKey.Quote, state.quote)
+      if (val && type === quoteType.CUSTOM) state.quote.val = val
+      else state.quote.val = ''
+      settings.setSync(dataKey.Quote, state.quote)
     },
     SET_NOTIFICATION(state, notification) {
       state.notification = notification
-      settings.set(dataKey.Notification, notification)
+      settings.setSync(dataKey.Notification, notification)
     },
     SET_WORKING_TIME(state, workingTime) {
       state.workingTime = workingTime
-      settings.set(dataKey.WorkingTime, workingTime)
+      settings.setSync(dataKey.WorkingTime, workingTime)
     },
     SET_RESTING_TIME(state, restingTime) {
       state.restingTime = restingTime
-      settings.set(dataKey.RestingTime, restingTime)
+      settings.setSync(dataKey.RestingTime, restingTime)
     },
     SET_ALL(state, newState) {
-      state.background = newState.background
-      state.quote = newState.quote
-      state.notification = newState.notification
-      state.workingTime = newState.workingTime
-      state.restingTime = newState.restingTime
-      settings.setBulk(newState)
+      for (let [key, val] of Object.entries(newState)) {
+        state[key] = val
+      }
+      settings.setAllSync(newState)
     },
     RESET(state) {
-      state.background = defaultSettings.background
-      state.quote = defaultSettings.quote
-      state.notification = defaultSettings.notification
-      state.workingTime = defaultSettings.workingTime
-      state.restingTime = defaultSettings.restingTime
-
-
-      settings.remove(dataKey.Background)
-      settings.remove(dataKey.Quote)
-      settings.remove(dataKey.Notification)
-      settings.remove(dataKey.WorkingTime)
-      settings.remove(dataKey.RestingTime)
+      for (let [key, val] of Object.entries(defaultSettings)) {
+        state[key] = val
+      }
+      settings.clearSync()
+    },
+    SET_BACKGROUND_MUSIC(state, [selected, volume]) {
+      state.backgroundMusic['selected'] = selected
+      state.backgroundMusic['volume'] = volume
+      settings.setSync(dataKey.BackgroundMusic, state.backgroundMusic)
     }
   },
   getters: {

@@ -1,10 +1,28 @@
 /**
+ * 计时器状态
+ */
+export const clockStatus = {
+  WORK: 'work',
+  REST: 'rest'
+}
+
+/**
+ * 计时器状态对应的中文
+ */
+export const clockChinese = {
+  work: '专注',
+  rest: '休息'
+}
+
+/**
  * 背景类型
  */
 export const backgroundType = {
   UNSPLASH: 'unsplash',
   SHANBAY: 'shanbay',
   BING: 'bing',
+  XIAOWAI: 'xiaowai',
+  NETWORK: 'network',
   IMAGE: 'image',
   COLOR: 'color'
 }
@@ -16,9 +34,16 @@ export const backgroundChinese = {
   unsplash: 'Unsplash',
   shanbay: '扇贝',
   bing: '必应',
+  xiaowai: '小歪',
+  network: '网络图片地址',
   image: '自定义图片背景',
   color: '自定义颜色背景'
 }
+
+export const crossDomainBackground = [
+  backgroundType.SHANBAY,
+  backgroundType.XIAOWAI
+]
 
 /**
  * 引言类型
@@ -26,6 +51,10 @@ export const backgroundChinese = {
 export const quoteType = {
   HITOKOTO: 'hitokoto',
   SHANBAY: 'shanbay',
+  JINRISHICI: 'jinrishici',
+  YOUDAO: 'youdao',
+  ICIBA: 'iciba',
+  ONEYIJU: 'oneyiju',
   CUSTOM: 'custom'
 }
 
@@ -33,16 +62,26 @@ export const quoteType = {
  * 引言类型对应的中文
  */
 export const quoteChinese = {
-  custom: '自定义',
   hitokoto: '一言',
-  shanbay: '扇贝'
+  shanbay: '扇贝',
+  jinrishici: '今日诗词',
+  youdao: '有道',
+  iciba: '金山词霸',
+  oneyiju: 'ONE一句',
+  custom: '自定义'
 }
+
+export const crossDomainQuote = [
+  quoteType.SHANBAY,
+  quoteType.YOUDAO,
+  quoteType.ICIBA
+]
 
 /**
  * uTools 插件的 Feature
  */
 export const uToolsFeatureCodes = {
-  Home: 'take-a-break',
+  Home: 'relax',
   Work: 'start-work',
   Rest: 'start-rest',
   StopOrContinue: 'stop-continue-clock'
@@ -57,7 +96,9 @@ export const dataKey = {
   WorkingTime: 'workingTime',
   RestingTime: 'restingTime',
   Notification: 'notification',
-  Statistics: 'statistics'
+  Statistics: 'statistics',
+  BackgroundMusic: 'backgroundMusic',
+  Todo: 'todo'
 }
 
 /**
@@ -66,13 +107,11 @@ export const dataKey = {
 export const defaultSettings = {
   background: {
     type: backgroundType.BING,
-    val: '',
-    updateTime: ''
+    val: ''
   },
   quote: {
-    type: quoteType.HITOKOTO,
-    val: '',
-    updateTime: ''
+    type: quoteType.JINRISHICI,
+    val: ''
   },
   workingTime: 45 * 60,
   restingTime: 5 * 60,
@@ -80,5 +119,9 @@ export const defaultSettings = {
     whenEndOfWorkingTime: true,
     beforeEndOfWorkingTime: false,
     whenEndOfRestingTime: true
+  },
+  backgroundMusic: {
+    selected: 'none',
+    volume: 0.5
   }
 }
