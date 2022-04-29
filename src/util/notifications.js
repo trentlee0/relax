@@ -16,6 +16,10 @@ export function requestNotificationPermission() {
   }
 }
 
+/**
+ * @param {string} content
+ * @param {number} closeTimeout
+ */
 export function showNotice(content, closeTimeout) {
   if (isUTools()) {
     utools.showNotification(content, 'relax')

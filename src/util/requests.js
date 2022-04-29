@@ -19,12 +19,17 @@ export function arrayBufferToBase64ImageJPEG(arrayBuffer) {
   return arrayBufferToBase64(arrayBuffer, 'image/jpeg')
 }
 
+/**
+ * @param {string} url
+ * @return {Promise<string>}
+ */
 export function getImagePNGToBase64(url) {
   return new Promise((resolve, reject) => {
     axios.request({
       url: url,
       method: 'get',
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
+      timeout: 60_000
     })
       .then(res => resolve(arrayBufferToBase64ImagePNG(res.data)))
       .catch(err => reject(err))

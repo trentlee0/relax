@@ -1,14 +1,37 @@
 <template>
   <div class="pa-1">
     <v-container style="margin-bottom: 150px;">
-      <h2 class="text-h6 font-weight-bold">
-        待办事项
-      </h2>
+      <v-row>
+        <v-col cols="4">
+          <h2 class="text-h6 font-weight-bold">
+            待办事项
+          </h2>
+        </v-col>
+        <v-col cols="8">
+          <div class="float-right mr-2">
+            <v-avatar
+              class="float-right"
+              v-if="hasUser"
+              color="primary"
+              size="35"
+            >
+              <img
+                alt=""
+                :src="userInfo.avatar"
+              >
+            </v-avatar>
+            <div class="float-right font-weight-bold font-italic" style="line-height: 35px;">
+              <span v-if="hasUser">{{ username }},&nbsp;</span>
+              <span>{{ greeting }}!&nbsp;&nbsp;</span>
+            </div>
+            <div class="text-caption mt-1 text-right mr-1" style="clear: both;">
+              今日: 专注 {{ todayWorkTimeFormat }}, 休息 {{ todayRestTimeFormat }}
+            </div>
+          </div>
+        </v-col>
+      </v-row>
 
-      <v-row
-        class="my-1 mt-2 mb-2"
-        align="center"
-      >
+      <v-row class="my-1 mb-2">
         <span class="ml-4 primary--text">
           <strong>总任务</strong>
           <span class="ml-2">{{ tasks.length }}</span>
@@ -18,7 +41,7 @@
 
         <v-progress-circular
           :value="progress"
-          size="22"
+          size="21"
           width="3"
           class="mr-3"
           color="primary"
@@ -76,7 +99,7 @@
           color="error"
           icon
           fab
-          title="删除已完成"
+          title="删除已完成任务"
           @click="dialog = true"
         >
           <MyIcon>mdi-close-box-multiple</MyIcon>
@@ -127,6 +150,8 @@ import TodoList from '@/components/Todo/TodoList'
 import todos from '@/store/todos'
 import Dialog from '@/components/Dialog'
 import MyIcon from '@/components/MyIcon'
+import {isUTools} from '@/util/platforms'
+import statistics from '@/store/statistics'
 
 export default {
   name: 'TodoPanel',
@@ -136,7 +161,11 @@ export default {
       tasks: [],
       newTaskTitle: null,
       panels: [0],
-      dialog: false
+      dialog: false,
+      greeting: null,
+      userInfo: null,
+      todayWorkTime: 0,
+      todayRestTime: 0
     }
   },
   computed: {
@@ -151,24 +180,93 @@ export default {
     },
     progress() {
       return this.tasks.length ? Math.round(this.doneTasksLen / this.tasks.length * 100) : 100
+    },
+    hasUser() {
+      return this.userInfo
+    },
+    username() {
+      return this.hasUser ? this.userInfo.username : ''
+    },
+    avatar() {
+      return this.hasUser ? this.userInfo.avatar : ''
+    },
+    todayWorkTimeFormat() {
+      return this.todayWorkTime + ' 分'
+    },
+    todayRestTimeFormat() {
+      return this.todayRestTime + ' 分'
     }
   },
   created() {
     todos.getAll().then(res => this.tasks = res.data || [])
+
+    this.initState()
   },
   mounted() {
     this.$bus.$on('startTask', this.startTask)
     this.$bus.$on('removeTask', this.removeTask)
     this.$bus.$on('updateTask', this.updateTask)
     this.$bus.$on('checkedTask', this.checkedTask)
+    this.$bus.$on('toTodoPanel', this.initState)
   },
   beforeDestroy() {
     this.$bus.$off('startTask')
     this.$bus.$off('removeTask')
     this.$bus.$off('updateTask')
     this.$bus.$off('checkedTask')
+    this.$bus.$off('toTodoPanel')
   },
   methods: {
+    initState() {
+      if (isUTools()) {
+        const user = utools.getUser()
+        if (user) {
+          this.userInfo = {username: user.nickname, avatar: user.avatar}
+        }
+      }
+      this.greeting = this.getGreeting()
+      statistics.getToday().then(res => {
+        this.todayWorkTime = res.data.todayWorkTime
+        this.todayRestTime = res.data.todayRestTime
+      })
+    },
+    getGreeting() {
+      switch (new Date().getHours()) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+          return '凌晨了'
+        case 6:
+        case 7:
+        case 8:
+          return '早晨好'
+        case 9:
+        case 10:
+        case 11:
+          return '上午好'
+        case 12:
+        case 13:
+          return '中午好'
+        case 14:
+        case 15:
+        case 16:
+        case 17:
+          return '下午好'
+        case 18:
+        case 19:
+          return '傍晚好'
+        case 20:
+        case 21:
+        case 22:
+        case 23:
+          return '晚上好'
+        default:
+          return '你好呀'
+      }
+    },
     startTask({taskId}) {
       for (let i = 0; i < this.tasks.length; i++) {
         if (this.tasks[i].id === taskId) {

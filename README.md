@@ -2,6 +2,14 @@
 
 休息一下 - 休息提醒 uTools 插件 & Web App
 
+## 特性
+
+1. 专注、休息提醒
+2. 白噪音
+3. 待办清单
+4. 自定义背景
+5. 专注休息时间线
+
 ## 安装
 
 在 [Releases](https://github.com/trentlee0/relax/releases) 页面下载
@@ -9,6 +17,7 @@
 ## 构建
 
 ```shell
+npm run install
 npm run build
 ```
 
@@ -38,6 +47,7 @@ npm run build
 - [howler.js](https://github.com/goldfire/howler.js)
 - [localForage](https://github.com/localForage/localForage)
 - [timer.js](https://github.com/husa/timer.js)
+- [Voca](https://github.com/panzerdp/voca)
 - [vue](https://github.com/vuejs/vue)
 - [vuetify](https://github.com/vuetifyjs/vuetify)
 

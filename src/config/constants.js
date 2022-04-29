@@ -34,7 +34,7 @@ export const backgroundChinese = {
   unsplash: 'Unsplash',
   shanbay: '扇贝',
   bing: '必应',
-  xiaowai: '小歪',
+  xiaowai: '高清壁纸',
   network: '网络图片地址',
   image: '自定义图片背景',
   color: '自定义颜色背景'

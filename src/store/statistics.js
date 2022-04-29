@@ -5,21 +5,35 @@ import {isUTools} from '@/util/platforms'
 import collect from 'collect.js'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import {exportJSON, importJSON} from '@/util/files'
+import voca from 'voca'
 
 dayjs.extend(customParseFormat)
 
 class Statistic {
   /**
    * @type {Storage}
+   * @private
    */
   storage
 
+  /**
+   * @param {Storage} storage
+   * @private
+   */
   constructor(storage) {
     this.storage = storage
   }
 
+  /**
+   * @type {Statistic}
+   * @private
+   */
   static _instance
 
+  /**
+   * @param {Storage} storage
+   * @return {Statistic}
+   */
   static instance(storage) {
     if (!this._instance) {
       this._instance = new Statistic(storage)
@@ -27,6 +41,12 @@ class Statistic {
     return this._instance
   }
 
+  /**
+   * @param {string} name
+   * @param {number} minuteDuration
+   * @param {'work' | 'rest'} status
+   * @return {Promise<SuccessMsg>}
+   */
   add(name, minuteDuration, status) {
     const key = dataKey.Statistics + '/' + dayjs().format('YYYY/MM')
     return new Promise((resolve, reject) => {
@@ -46,9 +66,121 @@ class Statistic {
     })
   }
 
+  /**
+   * @param {[{name: string, startTime: number, duration: number, status: 'work' | 'rest'}]} arr
+   * @return {number}
+   */
+  static getWorkTimeSum(arr) {
+    return arr.filter(item => item.status === clockStatus.WORK)
+      .map(item => item.duration)
+      .reduce((pre, cur) => pre + cur, 0)
+  }
+
+  /**
+   * @param {[{name: string, startTime: number, duration: number, status: 'work' | 'rest'}]} arr
+   * @return {number}
+   */
+  static getRestTimeSum(arr) {
+    return arr.filter(item => item.status === clockStatus.REST)
+      .map(item => item.duration)
+      .reduce((pre, cur) => pre + cur, 0)
+  }
+
+  /**
+   * @param {number} year
+   * @return {Promise<SuccessMsg>}
+   */
+  getStatisticByYear(year) {
+    const key = dataKey.Statistics + '/' + year
+    return new Promise((resolve, reject) => {
+      this.storage.queryLikeAsArray(key)
+        .then(res => {
+          const data = res.data
+          let yearWorkTime = Statistic.getWorkTimeSum(data)
+          let yearRestTime = Statistic.getRestTimeSum(data)
+          resolve(SuccessMsg.instance({yearWorkTime, yearRestTime}))
+        })
+        .catch(err => reject(err))
+    })
+  }
+
+  /**
+   * @param {number} year
+   * @param {number} month
+   * @return {Promise<SuccessMsg>}
+   */
+  getStatisticByMonth(year, month) {
+    const key = dataKey.Statistics + '/' + year + '/' + voca.sprintf('%02d', month)
+    return new Promise((resolve, reject) => {
+      this.storage.get(key).then(res => {
+        let data = res.data || []
+        let monthWorkTime = Statistic.getWorkTimeSum(data)
+        let monthRestTime = Statistic.getRestTimeSum(data)
+        resolve(SuccessMsg.instance({monthWorkTime, monthRestTime}))
+      }).catch(err => reject(err))
+    })
+  }
+
+  /**
+   * @param {number} year
+   * @param {number} month
+   * @param {number} dayOfMonth
+   * @return {Promise<SuccessMsg>}
+   */
+  getStatisticByDay(year, month, dayOfMonth) {
+    return new Promise((resolve, reject) => {
+      this.getByDay(year, month, dayOfMonth)
+        .then(res => {
+          let data = res.data || []
+          let dayWorkTime = Statistic.getWorkTimeSum(data)
+          let dayRestTime = Statistic.getRestTimeSum(data)
+          resolve(SuccessMsg.instance({dayWorkTime, dayRestTime}))
+        })
+        .catch(err => reject(err))
+    })
+  }
+
+  /**
+   * @param {number} year
+   * @param {number} month
+   * @param {number} dayOfMonth
+   * @return {Promise<SuccessMsg>}
+   */
+  getByDay(year, month, dayOfMonth) {
+    const yearMonth = year + '/' + voca.sprintf('%02d', month)
+    const key = dataKey.Statistics + '/' + yearMonth
+    return new Promise((resolve, reject) => {
+      this.storage.get(key).then(res => {
+        let data = res.data || []
+        const target = yearMonth + '/' + dayOfMonth
+        const arr = data.filter(item => dayjs(item.startTime).format('YYYY/MM/DD') === target)
+        resolve(SuccessMsg.instance(arr))
+      }).catch(err => reject(err))
+    })
+  }
+
+  /**
+   * @return {Promise<SuccessMsg>}
+   */
+  getToday() {
+    return new Promise((resolve, reject) => {
+      const date = new Date()
+      this.getStatisticByDay(date.getFullYear(), date.getMonth() + 1, date.getDate())
+        .then(res => {
+          const data = res.data
+          resolve(SuccessMsg.instance({todayWorkTime: data.dayWorkTime, todayRestTime: data.dayRestTime}))
+        })
+        .catch(err => reject(err))
+    })
+  }
+
+  /**
+   * @param {string} dateFormat
+   * @return {Promise<SuccessMsg>}
+   */
   getStatisticData(dateFormat) {
     return new Promise((resolve, reject) => {
-      this.storage.queryLikeAsArray('statistics/').then(res => {
+      this.storage.queryLikeAsArray(dataKey.Statistics + '/').then(res => {
         const data = res.data
         if (!data) {
           resolve(SuccessMsg.emptyInstance())
@@ -86,10 +218,16 @@ class Statistic {
     })
   }
 
+  /**
+   * @return {Promise<SuccessMsg>}
+   */
   removeStatistic() {
     return this.storage.removeLike(dataKey.Statistics)
   }
 
+  /**
+   * @return {Promise<SuccessMsg>}
+   */
   exportStatisticToJSON() {
     const filename = 'relax_statistics.json'
     return new Promise((resolve, reject) => {
@@ -106,6 +244,10 @@ class Statistic {
     })
   }
 
+  /**
+   * @param {File} file
+   * @return {Promise<SuccessMsg>}
+   */
   importJSONToStatistic(file) {
     return new Promise((resolve, reject) => {
       importJSON(file).then(res => {

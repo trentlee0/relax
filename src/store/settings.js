@@ -12,15 +12,28 @@ import {exportJSON, importJSON} from '@/util/files'
 class Setting {
   /**
    * @type {Storage}
+   * @private
    */
   storage
 
+  /**
+   * @param {Storage} storage
+   * @private
+   */
   constructor(storage) {
     this.storage = storage
   }
 
+  /**
+   * @type {Setting}
+   * @private
+   */
   static _instance
 
+  /**
+   * @param storage
+   * @return {Setting}
+   */
   static instance(storage) {
     if (!this._instance) {
       this._instance = new Setting(storage)
@@ -28,14 +41,25 @@ class Setting {
     return this._instance
   }
 
+  /**
+   * @param {string} key
+   * @return {Object}
+   */
   getSync(key) {
     return this.storage.getSync(key)
   }
 
+  /**
+   * @param {string} key
+   * @param {Object} value
+   */
   setSync(key, value) {
     this.storage.setSync(key, value)
   }
 
+  /**
+   * @param {string} key
+   */
   removeSync(key) {
     this.storage.removeSync(key)
   }
@@ -49,6 +73,9 @@ class Setting {
     this.removeSync(dataKey.BackgroundMusic)
   }
 
+  /**
+   * @param {{background, quote, workingTime, restingTime, notification, statistics}} setting
+   */
   setAllSync(setting) {
     this.setSync(dataKey.Background, setting[dataKey.Background])
     this.setSync(dataKey.Quote, setting[dataKey.Quote])
@@ -57,18 +84,34 @@ class Setting {
     this.setSync(dataKey.RestingTime, setting[dataKey.RestingTime])
   }
 
+  /**
+   * @param {string} type
+   * @param {Object} attachment
+   * @return {Promise<SuccessMsg>}
+   */
   setTempCache(type, attachment) {
     return this.storage.setTempCache('temps:' + type, attachment)
   }
 
+  /**
+   * @param {string} type
+   * @return {Promise<SuccessMsg>}
+   */
   getTempCache(type) {
     return this.storage.getTempCache('temps:' + type)
   }
 
+  /**
+   * @param type
+   * @return {Promise<SuccessMsg>}
+   */
   removeTempCache(type) {
     return this.storage.removeTempCache('temps:' + type)
   }
 
+  /**
+   * @return {Promise<SuccessMsg[]>}
+   */
   clearTempCache() {
     return Promise.all([
       this.removeTempCache(backgroundType.UNSPLASH),
@@ -80,6 +123,10 @@ class Setting {
     ])
   }
 
+  /**
+   * @param {Object} data
+   * @return {Promise<SuccessMsg>}
+   */
   exportSettingToJSON(data) {
     const filename = 'relax_conf.json'
     return new Promise((resolve, reject) => {
@@ -99,6 +146,10 @@ class Setting {
     })
   }
 
+  /**
+   * @param {File} file
+   * @return {Promise<SuccessMsg>}
+   */
   importJSONToSetting(file) {
     return new Promise((resolve, reject) => {
       importJSON(file).then(res => {

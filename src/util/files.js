@@ -53,7 +53,7 @@ export function uint8ArrayToString(fileData) {
 
 /**
  * 字符串类型转换为 Uint8Array 类型
- * @param str
+ * @param {string} str
  * @return {Uint8Array}
  */
 export function stringToUint8Array(str) {

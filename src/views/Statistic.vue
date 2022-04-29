@@ -23,6 +23,7 @@
       bottom
       color="primary"
       @click="toTop"
+      title="返回顶部"
     >
       <MyIcon dark>
         mdi-arrow-up
@@ -30,16 +31,9 @@
     </v-btn>
 
 
-    <v-tabs
-      v-model="tab"
-      centered
-    >
-      <v-tab key="时间线">
-        时间线
-      </v-tab>
-      <v-tab key="近7天专注时长">
-        近7天专注时长
-      </v-tab>
+    <v-tabs centered v-model="tab">
+      <v-tab>时间线</v-tab>
+      <v-tab>趋势</v-tab>
     </v-tabs>
 
     <v-tabs-items v-model="tab">
@@ -130,13 +124,14 @@
               >
 
                 <div><strong>{{ key }}</strong></div>
-                <div>专注了 {{ formatMinute(value.workSum) }}，休息了 {{ formatMinute(value.restSum) }}</div>
+                <div>专注 {{ formatMinute(value.workSum) }}，休息 {{ formatMinute(value.restSum) }}</div>
               </v-timeline-item>
 
               <v-timeline-item
                 small
                 v-for="(item, j) in value.items"
                 :key="j"
+                color="grey"
               >
                 <v-row class="pt-1">
                   <v-col cols="6">
@@ -150,7 +145,7 @@
                   </v-col>
                   <v-col cols="6">
                     <div class="text-caption">
-                      {{ item.duration }} m
+                      {{ item.duration }} 分
                     </div>
                   </v-col>
                 </v-row>
@@ -161,7 +156,12 @@
       </v-tab-item>
 
       <v-tab-item>
+        <v-row class="my-3 justify-center">
+          <v-chip :color="activeChip === 0 ? 'primary' : ''" style="cursor: pointer;">近7天专注</v-chip>
+        </v-row>
+
         <v-card
+          v-show="activeChip === 0"
           flat
           class="ma-auto"
           max-width="1000"
@@ -179,11 +179,11 @@
                 平均每天
               </div>
               <div>
-                <span
-                  class="text-h3 font-weight-black"
-                  v-text="minutesAvg || '—'"
-                ></span>
-                <strong v-if="minutesAvg">MIN</strong>
+                        <span
+                          class="text-h3 font-weight-black"
+                          v-text="minutesAvg || '—'"
+                        ></span>
+                <strong v-if="minutesAvg">M</strong>
               </div>
             </v-row>
           </v-card-title>
@@ -229,15 +229,15 @@ export default {
   components: {MyIcon},
   data() {
     return {
-      tab: null,
-      tabs: ['时间线', '近7天专注时长'],
       dayGroups: {},
       dailyMinutes: [],
       dailyMinuteLabels: [],
       currentPage: 0,
       pageSize: 14,
       isCompleted: false,
-      isEmpty: false
+      isEmpty: false,
+      tab: null,
+      activeChip: 0
     }
   },
   computed: {
@@ -266,7 +266,7 @@ export default {
 
         this.dayGroups = data.allDayGroups
         this.dailyMinutes = data.last7daysDurations
-        this.dailyMinuteLabels = data.last7daysDurations.map(item => item + 'min')
+        this.dailyMinuteLabels = data.last7daysDurations.map(item => item + 'm')
         this.dailyMinutes.splice(0, 0, 0)
         this.dailyMinuteLabels.splice(0, 0, 'Before')
 

@@ -10,6 +10,7 @@
               :class="{active: currentIndex === noneAudioIndex}"
               dark
               height="80"
+              title="关闭背景音乐"
               @click="changeAudio(noneAudioIndex)"
             >
               <MyIcon large>mdi-volume-off</MyIcon>
@@ -23,6 +24,7 @@
           >
             <v-card
               @click="changeAudio(index)"
+              :title="card.title"
             >
               <v-img
                 class="white--text align-end"

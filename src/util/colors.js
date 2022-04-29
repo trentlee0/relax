@@ -1,5 +1,9 @@
 import ColorThief from 'colorthief'
 
+/**
+ * @param {string} hexColor
+ * @return {number}
+ */
 export function hexToBrightness(hexColor) {
   const hex = hexColor.replace(/#/, '')
   const r = parseInt(hex.substr(0, 2), 16)
@@ -8,6 +12,12 @@ export function hexToBrightness(hexColor) {
   return [0.299 * r, 0.587 * g, 0.114 * b].reduce((pre, cur) => pre + cur) / 255
 }
 
+/**
+ * @param {number} r
+ * @param {number} g
+ * @param {number} b
+ * @return {string}
+ */
 export function rgbToHex(r, g, b) {
   return '#' + [r, g, b].map(x => {
     const hex = x.toString(16)

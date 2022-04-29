@@ -31,6 +31,7 @@
       bottom
       color="primary"
       @click="toTop"
+      title="返回顶部"
     >
       <MyIcon dark>
         mdi-arrow-up

@@ -1,3 +1,8 @@
+/**
+ * @param {function} fn
+ * @param {number} delay
+ * @return {function(): void}
+ */
 export function debounce(fn, delay) {
   let timeout = null
   return function() {
@@ -8,7 +13,11 @@ export function debounce(fn, delay) {
   }
 }
 
-
+/**
+ * @param {function} fn
+ * @param {number} delay
+ * @return {function(): void}
+ */
 export function throttle(fn, delay) {
   let canRun = true
   return function() {

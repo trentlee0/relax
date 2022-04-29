@@ -12,7 +12,6 @@ import {
   mdiCoffeeOutline,
   mdiRotate3dVariant,
   mdiPauseCircle,
-  mdiRestore,
   mdiArrowLeft,
   mdiContentSaveOutline,
   mdiArrowUp,
@@ -23,7 +22,8 @@ import {
   mdiCheckboxMarked,
   mdiChevronDown,
   mdiArchiveCheckOutline,
-  mdiMenuDown
+  mdiMenuDown,
+  mdiCropSquare
 } from '@mdi/js'
 import Vuetify from 'vuetify/lib/framework'
 
@@ -46,7 +46,7 @@ export default new Vuetify({
       'mdi-rotate-3d-variant': mdiRotate3dVariant,
       'mdi-pause-circle': mdiPauseCircle,
       'mdi-arrow-right-drop-circle': mdiArrowRightDropCircle,
-      'mdi-restore': mdiRestore,
+      'crop-square': mdiCropSquare,
       'mdi-arrow-left': mdiArrowLeft,
       'mdi-content-save-outline': mdiContentSaveOutline,
       'mdi-arrow-up': mdiArrowUp,

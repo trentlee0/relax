@@ -39,7 +39,7 @@
         icon
         fab
         class="todo-btn"
-        @click="drawer = true"
+        @click="showDrawer"
         title="待办事项"
       >
         <MyIcon>mdi-format-list-checks</MyIcon>
@@ -54,6 +54,13 @@
       temporary
     >
       <TodoPanel></TodoPanel>
+      <Dialog
+        title="当前正在计时，是否切换到新任务？"
+        :show="dialog.switchTaskDialog"
+        @confirm="switchTask"
+        @cancel="dialog.switchTaskDialog = false"
+      >
+      </Dialog>
     </v-navigation-drawer>
 
     <div id="main">
@@ -102,7 +109,7 @@
             :dark="darkStyle"
             :light="!darkStyle"
             title="切换计时器"
-            @click.stop="handleSwitchTimerClick"
+            @click.stop="isClocking ? dialog.switchClockDialog = true : switchClock()"
           >
             <MyIcon>mdi-rotate-3d-variant</MyIcon>
           </v-btn>
@@ -123,10 +130,10 @@
             fab
             :dark="darkStyle"
             :light="!darkStyle"
-            title="重置计时"
-            @click.stop="handleRestoreTimerClick"
+            title="结束计时"
+            @click.stop="isClocking && (dialog.restoreDialog = true)"
           >
-            <MyIcon>mdi-restore</MyIcon>
+            <MyIcon>crop-square</MyIcon>
           </v-btn>
         </div>
       </div>
@@ -151,15 +158,15 @@
     <Dialog
       :title="'当前正在' + currentTip + '中，是否切换计时器？'"
       :show="dialog.switchClockDialog"
-      @confirm="switchDialogOk"
+      @confirm="switchTimer"
       @cancel="dialog.switchClockDialog = false"
     >
     </Dialog>
 
     <Dialog
-      title="是否重置计时器？"
+      title="是否结束计时？"
       :show="dialog.restoreDialog"
-      @confirm="restoreDialogOk"
+      @confirm="restoreTimer"
       @cancel="dialog.restoreDialog = false"
     >
     </Dialog>
@@ -193,6 +200,7 @@ export default {
       timer: {},
       tick: 0,
       isPlaying: false,
+      isPause: false,
       status: 0,
       progress: 100,
       resetTimeout: 500,
@@ -204,11 +212,13 @@ export default {
         restoreDialog: false,
         switchClockDialog: false,
         quitClockToSettingDialog: false,
-        quitClockToStatisticDialog: false
+        quitClockToStatisticDialog: false,
+        switchTaskDialog: false
       },
       isSwitchAndStartTimer: false,
       drawer: false,
-      darkStyle: true
+      darkStyle: true,
+      tempTask: null
     }
   },
   computed: {
@@ -277,6 +287,9 @@ export default {
     currentStatus() {
       return this.status ? clockStatus.REST : clockStatus.WORK
     },
+    isClocking() {
+      return this.isPlaying || this.isPause
+    },
     isUTools() {
       return isUTools()
     }
@@ -304,11 +317,13 @@ export default {
         }
       },
       onstart() {
-        this.isPlaying = true
+        that.isPlaying = true
+        that.isPause = false
         if (that.isWorkingTime) that.playBackgroundMusic()
       },
       onpause() {
-        this.isPlaying = false
+        that.isPlaying = false
+        that.isPause = true
         if (that.isWorkingTime) that.pauseBackgroundMusic()
       },
       onstop() {
@@ -317,6 +332,7 @@ export default {
         that.tick = that.totalTime
         that.progress = 100
         that.isPlaying = false
+        that.isPause = false
       },
       onend() {
         if (that.isWorkingTime) that.pauseBackgroundMusic()
@@ -354,11 +370,17 @@ export default {
     this.$bus.$emit('stopAudio')
   },
   methods: {
+    showDrawer() {
+      this.$bus.$emit('toTodoPanel')
+      this.drawer = true
+    },
     startTaskTimer(task) {
-      this.timer.stop()
-      this.switchToWork()
-      this.startTimer()
-      this.customTip = task.title
+      this.tempTask = task
+      if (this.isWorkingTime && this.isClocking) {
+        this.customTip !== task.title && (this.dialog.switchTaskDialog = true)
+      } else {
+        this.switchTask()
+      }
     },
     getImage() {
       if (this.bgColor) {
@@ -399,7 +421,6 @@ export default {
     },
     startTimer() {
       this.isPlaying ? this.timer.pause() : this.timer.start(this.tick)
-      this.isPlaying = !this.isPlaying
     },
     switchToWork() {
       this.status = 0
@@ -414,10 +435,7 @@ export default {
       this.status = 1
       this.tick = this.totalTime
     },
-    handleSwitchTimerClick() {
-      this.isPlaying ? this.dialog.switchClockDialog = true : this.switchClock()
-    },
-    switchDialogOk() {
+    switchTimer() {
       this.timer.stop()
       this.dialog.switchClockDialog = false
       setTimeout(() => {
@@ -428,24 +446,33 @@ export default {
         }
       }, 100)
     },
-    handleRestoreTimerClick() {
-      this.dialog.restoreDialog = true
+    switchTask() {
+      const task = {...this.tempTask}
+      this.timer.stop()
+      this.switchToWork()
+      this.startTimer()
+      this.customTip = task.title
+      this.tempTask = null
+      this.dialog.switchTaskDialog = false
     },
-    restoreDialogOk() {
+    restoreTimer() {
+      if (this.totalTime - this.tick >= 60) {
+        statistics.add(this.showTip, Math.floor(this.tick / 60), this.currentStatus)
+      }
       this.timer.stop()
       this.dialog.restoreDialog = false
     },
     toSetting() {
-      this.isPlaying ? this.dialog.quitClockToSettingDialog = true : this.$router.push('/setting')
+      this.isClocking ? this.dialog.quitClockToSettingDialog = true : this.$router.push('/setting')
     },
     toStatistic() {
-      this.isPlaying ? this.dialog.quitClockToStatisticDialog = true : this.$router.push('/statistic')
+      this.isClocking ? this.dialog.quitClockToStatisticDialog = true : this.$router.push('/statistic')
     },
     uToolsMode() {
       utools.onPluginEnter(({code}) => {
         switch (code) {
           case uToolsFeatureCodes.Work:
-            if (!this.isPlaying) {
+            if (!this.isClocking) {
               this.switchToWork()
               this.startTimer()
             } else if (this.isRestingTime) {
@@ -454,7 +481,7 @@ export default {
             }
             break
           case uToolsFeatureCodes.Rest:
-            if (!this.isPlaying) {
+            if (!this.isClocking) {
               this.switchToRest()
               this.startTimer()
             } else if (this.isWorkingTime) {
