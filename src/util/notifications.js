@@ -20,7 +20,7 @@ export function requestNotificationPermission() {
  * @param {string} content
  * @param {number} closeTimeout
  */
-export function showNotice(content, closeTimeout) {
+export function showNotice(content, closeTimeout = undefined) {
   if (isUTools()) {
     utools.showNotification(content, 'relax')
   } else {

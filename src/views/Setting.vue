@@ -114,12 +114,19 @@
         subheader
         three-line
       >
-        <v-subheader class="font-weight-bold">通知</v-subheader>
+        <v-subheader class="font-weight-bold">提醒</v-subheader>
 
         <v-list-item>
           <v-switch
             v-model="notification.whenEndOfWorkingTime"
             label="专注结束发送通知"
+          ></v-switch>
+        </v-list-item>
+
+        <v-list-item v-if="isUTools">
+          <v-switch
+            v-model="notification.showWindowWhenEndOfWorkingTime"
+            label="专注结束显示主窗口"
           ></v-switch>
         </v-list-item>
 
@@ -129,7 +136,6 @@
             label="专注结束前 15 秒发送通知"
           ></v-switch>
         </v-list-item>
-
         <v-list-item>
           <v-switch
             v-model="notification.whenEndOfRestingTime"
@@ -204,7 +210,6 @@
                       v-model="imageSizeValid"
                       lazy-validation
                     >
-                      <!--TODO 改ICON-->
                       <v-file-input
                         :rules="rules"
                         accept="image/png"
@@ -426,6 +431,9 @@ export default {
     },
     isCustomQuote() {
       return this.quoteSourceSelectedItem === quoteChinese.custom
+    },
+    isUTools() {
+      return isUTools()
     }
   },
   created() {

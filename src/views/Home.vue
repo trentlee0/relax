@@ -337,11 +337,11 @@ export default {
       onend() {
         if (that.isWorkingTime) that.pauseBackgroundMusic()
 
-        if (that.status === 0 && that.notification.whenEndOfWorkingTime) {
-          showNotice('专注结束了，休息一下吧')
-        }
-        if (that.status === 1 && that.notification.whenEndOfRestingTime) {
-          showNotice('休息结束啦')
+        if (that.status === 0) {
+          that.notification.whenEndOfWorkingTime && showNotice('专注结束了，休息一下吧')
+          that.isUTools && that.notification.showWindowWhenEndOfWorkingTime && that.showUToolsMainWindow()
+        } else if (that.status === 1) {
+          that.notification.whenEndOfRestingTime && showNotice('休息结束啦')
         }
         that.tick = 0
         that.progress = 0
@@ -370,6 +370,12 @@ export default {
     this.$bus.$emit('stopAudio')
   },
   methods: {
+    showUToolsMainWindow() {
+      utools.redirect('休息一下', null)
+      setTimeout(() => {
+        utools.showMainWindow()
+      }, 500)
+    },
     showDrawer() {
       this.$bus.$emit('toTodoPanel')
       this.drawer = true

@@ -118,7 +118,8 @@ export const defaultSettings = {
   notification: {
     whenEndOfWorkingTime: true,
     beforeEndOfWorkingTime: false,
-    whenEndOfRestingTime: true
+    whenEndOfRestingTime: true,
+    showWindowWhenEndOfWorkingTime: false
   },
   backgroundMusic: {
     selected: 'none',
