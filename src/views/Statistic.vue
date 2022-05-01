@@ -179,10 +179,10 @@
                 平均每天
               </div>
               <div>
-                        <span
-                          class="text-h3 font-weight-black"
-                          v-text="minutesAvg || '—'"
-                        ></span>
+                <span
+                  class="text-h4 font-weight-black"
+                  v-text="minutesAvg || '—'"
+                ></span>
                 <strong v-if="minutesAvg">M</strong>
               </div>
             </v-row>
