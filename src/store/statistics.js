@@ -5,7 +5,7 @@ import {isUTools} from '@/util/platforms'
 import collect from 'collect.js'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import {exportJSON, importJSON} from '@/util/files'
-import voca from 'voca'
+import * as strings from '@/util/strings'
 
 dayjs.extend(customParseFormat)
 
@@ -48,7 +48,7 @@ class Statistic {
    * @return {Promise<SuccessMsg>}
    */
   add(name, minuteDuration, status) {
-    const key = dataKey.Statistics + '/' + dayjs().format('YYYY/MM')
+    const key = strings.format('%s/%s', dataKey.Statistics, dayjs().format('YYYY/MM'))
     return new Promise((resolve, reject) => {
       this.storage.get(key).then(res => {
         let data = res.data || []
@@ -110,7 +110,7 @@ class Statistic {
    * @return {Promise<SuccessMsg>}
    */
   getStatisticByMonth(year, month) {
-    const key = dataKey.Statistics + '/' + year + '/' + voca.sprintf('%02d', month)
+    const key = strings.format('%s/%d/%02d', dataKey.Statistics, year, month)
     return new Promise((resolve, reject) => {
       this.storage.get(key).then(res => {
         let data = res.data || []
@@ -147,12 +147,12 @@ class Statistic {
    * @return {Promise<SuccessMsg>}
    */
   getByDay(year, month, dayOfMonth) {
-    const yearMonth = year + '/' + voca.sprintf('%02d', month)
-    const key = dataKey.Statistics + '/' + yearMonth
+    const yearMonth = strings.format('%d/%02d', year, month)
+    const key = strings.format('%s/%s', dataKey.Statistics, yearMonth)
     return new Promise((resolve, reject) => {
       this.storage.get(key).then(res => {
         let data = res.data || []
-        const target = yearMonth + '/' + dayOfMonth
+        const target = strings.format('%s/%02d', yearMonth, dayOfMonth)
         const arr = data.filter(item => dayjs(item.startTime).format('YYYY/MM/DD') === target)
         resolve(SuccessMsg.instance(arr))
       }).catch(err => reject(err))

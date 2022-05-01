@@ -232,7 +232,6 @@ export default {
     },
     getGreeting() {
       switch (new Date().getHours()) {
-        case 0:
         case 1:
         case 2:
         case 3:
@@ -253,16 +252,18 @@ export default {
         case 14:
         case 15:
         case 16:
-        case 17:
           return '下午好'
+        case 17:
         case 18:
+          return '傍晚了'
         case 19:
-          return '傍晚好'
         case 20:
         case 21:
         case 22:
-        case 23:
           return '晚上好'
+        case 23:
+        case 0:
+          return '深夜了'
         default:
           return '你好呀'
       }
