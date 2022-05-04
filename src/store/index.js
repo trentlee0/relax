@@ -2,17 +2,18 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import {backgroundType, dataKey, defaultSettings, quoteType} from '@/config/constants'
 import settings from '@/store/settings'
+import {deepCopy} from '@/util/commons'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    background: settings.getSync(dataKey.Background) || defaultSettings.background,
-    quote: settings.getSync(dataKey.Quote) || defaultSettings.quote,
-    notification: settings.getSync(dataKey.Notification) || defaultSettings.notification,
-    workingTime: settings.getSync(dataKey.WorkingTime) || defaultSettings.workingTime,
-    restingTime: settings.getSync(dataKey.RestingTime) || defaultSettings.restingTime,
-    backgroundMusic: settings.getSync(dataKey.BackgroundMusic) || defaultSettings.backgroundMusic
+    background: settings.getSync(dataKey.Background) || deepCopy(defaultSettings.background),
+    quote: settings.getSync(dataKey.Quote) || deepCopy(defaultSettings.quote),
+    notification: settings.getSync(dataKey.Notification) || deepCopy(defaultSettings.notification),
+    workingTime: settings.getSync(dataKey.WorkingTime) || deepCopy(defaultSettings.workingTime),
+    restingTime: settings.getSync(dataKey.RestingTime) || deepCopy(defaultSettings.restingTime),
+    backgroundMusic: settings.getSync(dataKey.BackgroundMusic) || deepCopy(defaultSettings.backgroundMusic)
   },
   mutations: {
     UPDATE_BACKGROUND(state, [type, val]) {
@@ -50,7 +51,7 @@ export default new Vuex.Store({
       settings.setAllSync(newState)
     },
     RESET(state) {
-      for (let [key, val] of Object.entries(defaultSettings)) {
+      for (let [key, val] of Object.entries(deepCopy(defaultSettings))) {
         state[key] = val
       }
       settings.clearSync()

@@ -30,3 +30,11 @@ export function throttle(fn, delay) {
   }
 }
 
+/**
+ * @param {any} obj
+ * @return {any}
+ */
+export function deepCopy(obj) {
+  return JSON.parse(JSON.stringify(obj))
+}
+

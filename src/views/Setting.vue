@@ -508,6 +508,7 @@ export default {
       this.$store.commit('RESET')
       settings.clearTempCache().then(() => {
         this.initState()
+        console.log(this.$store.state)
         this.deleteSettingDialog = false
         this.showSuccessSnackBar('重置成功')
       }).catch(err => this.showErrorSnackBar('重置失败，原因：' + err.message))

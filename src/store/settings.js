@@ -8,6 +8,7 @@ import {
 } from '@/config/constants'
 import {BrowserStorage, Storage, SuccessMsg, UToolsStorage} from '@/store/storage'
 import {exportJSON, importJSON} from '@/util/files'
+import {deepCopy} from '@/util/commons'
 
 class Setting {
   /**
@@ -167,9 +168,9 @@ class Setting {
           // 由于跨域问题需要修改
           if (!isUTools()) {
             if (crossDomainBackground.indexOf(data.background.type) !== -1)
-              data.background = defaultSettings.background
+              data.background = deepCopy(defaultSettings.background)
             if (crossDomainQuote.indexOf(data.quote.type) !== -1)
-              data.quote = defaultSettings.quote
+              data.quote = deepCopy(defaultSettings.quote)
           }
 
           // 处理自定义图片导入问题
