@@ -372,9 +372,17 @@ export default {
   methods: {
     showUToolsMainWindow() {
       utools.redirect('休息一下', null)
-      setTimeout(() => {
-        utools.showMainWindow()
-      }, 500)
+      let isShow = false
+      const timeouts = [0, 50, 50, 100, 300, 500]
+      let index = 0
+      const attempt = () => {
+        if (isShow || index === timeouts.length) return
+        setTimeout(() => {
+          isShow = utools.showMainWindow()
+          attempt()
+        }, timeouts[index++])
+      }
+      attempt()
     },
     showDrawer() {
       this.$bus.$emit('toTodoPanel')
