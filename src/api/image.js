@@ -2,6 +2,7 @@ import {backgroundType} from '@/config/constants'
 import {get, getImagePNGToBase64} from '@/util/requests'
 import settings from '@/store/settings'
 import store from '@/store'
+import {isUTools} from '@/util/platforms'
 
 const IMAGE_REQUESTS = {
   [backgroundType.UNSPLASH]: () => {
@@ -15,7 +16,14 @@ const IMAGE_REQUESTS = {
     })
   },
   [backgroundType.BING]: () => {
-    return getImagePNGToBase64('https://api.isoyu.com/bing_images.php')
+    if (isUTools()) {
+      return new Promise((resolve, reject) => {
+        get('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1')
+          .then(res => resolve('https://cn.bing.com/' + res.data['images'][0]['url']))
+          .catch(err => reject(err))
+      })
+    }
+    return getImagePNGToBase64('https://api.xygeng.cn/Bing/')
   },
   [backgroundType.IMAGE]: () => {
     return new Promise((resolve, reject) => {

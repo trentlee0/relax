@@ -33,7 +33,9 @@ npm run build
 
 图片：
 - Unsplash：https://source.unsplash.com
-- 必应：https://api.isoyu.com/bing_images.php
+- 必应：
+  - https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1
+  - https://api.xygeng.cn/Bing/
 - 扇贝：https://apiv3.shanbay.com/weapps/dailyquote/quote
 - 小歪高清壁纸：https://api.ixiaowai.cn/gqapi/gqapi.php
 
