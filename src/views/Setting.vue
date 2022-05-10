@@ -156,7 +156,7 @@
         <v-list-item>
           <v-list-item-content>
             <v-subheader class="pl-0">引言来源</v-subheader>
-            <v-col cols="6">
+            <v-col cols="12">
               <v-select
                 v-model="quoteSourceSelectedItem"
                 :items="quoteSourceItems"
@@ -164,15 +164,13 @@
                 solo
               ></v-select>
             </v-col>
-            <v-col cols="6">
-              <div v-if="isCustomQuote">
-                <v-text-field
-                  label="请输入引言"
-                  autofocus
-                  v-model="customQuote"
-                  solo
-                ></v-text-field>
-              </div>
+            <v-col cols="12" v-if="isCustomQuote">
+              <v-text-field
+                label="请输入引言"
+                autofocus
+                v-model="customQuote"
+                solo
+              ></v-text-field>
             </v-col>
           </v-list-item-content>
         </v-list-item>
