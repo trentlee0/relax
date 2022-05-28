@@ -1,5 +1,5 @@
 <template>
-  <div id="page">
+  <div id="home-page">
     <v-img
       class="background-img"
       :style="{backgroundColor: bgColor}"
@@ -16,7 +16,7 @@
         title="统计"
         @click="toStatistic"
       >
-        <MyIcon>mdi-view-dashboard-outline</MyIcon>
+        <MyIcon>mdi-chart-box-outline</MyIcon>
       </v-btn>
 
       <v-btn
@@ -65,7 +65,7 @@
 
     <div id="main">
       <div class="container" :style="{minHeight: progressContainer + 'px'}">
-        <div class="quote-div ">
+        <div class="quote-div " :style="{marginBottom: $vuetify.breakpoint.name === 'xs' ? '32px' : '10px'}">
           <div
             class="quote-content-div"
             :class="fontColorClass"
@@ -140,22 +140,6 @@
     </div>
 
     <Dialog
-      title="将要退出计时器？"
-      :show="dialog.quitClockToSettingDialog"
-      @confirm="$router.push('/setting')"
-      @cancel="dialog.quitClockToSettingDialog = false"
-    >
-    </Dialog>
-
-    <Dialog
-      title="将要退出计时器？"
-      :show="dialog.quitClockToStatisticDialog"
-      @confirm="$router.push('/statistic')"
-      @cancel="dialog.quitClockToStatisticDialog = false"
-    >
-    </Dialog>
-
-    <Dialog
       :title="'当前正在' + currentTip + '中，是否切换计时器？'"
       :show="dialog.switchClockDialog"
       @confirm="switchTimer"
@@ -211,8 +195,6 @@ export default {
       dialog: {
         restoreDialog: false,
         switchClockDialog: false,
-        quitClockToSettingDialog: false,
-        quitClockToStatisticDialog: false,
         switchTaskDialog: false
       },
       isSwitchAndStartTimer: false,
@@ -233,11 +215,11 @@ export default {
       if (this.isUTools) return 290
       switch (this.$vuetify.breakpoint.name) {
         case 'xs':
-          return 250
+          return 260
         case 'sm':
-          return 270
-        default:
           return 300
+        default:
+          return 320
       }
     },
     progressContainer() {
@@ -299,70 +281,10 @@ export default {
     this.getImage()
     this.getQuote()
   },
-  mounted() {
-    window.document.documentElement.style.overflowY = 'hidden'
-
-    const that = this
-
-    this.tick = this.totalTime
-    this.timer = new Timer({
-      tick: 1,
-      ontick(ms) {
-        let s = Math.round(ms / 1000)
-        that.tick = s
-        that.progress = s * that.ratio
-        if (that.status === 0 && that.notification.beforeEndOfWorkingTime &&
-          that.tick === that.notifyBeforeEndOfTime) {
-          showNotice('准备休息啦', 5000)
-        }
-      },
-      onstart() {
-        that.isPlaying = true
-        that.isPause = false
-        if (that.isWorkingTime) that.playBackgroundMusic()
-      },
-      onpause() {
-        that.isPlaying = false
-        that.isPause = true
-        if (that.isWorkingTime) that.pauseBackgroundMusic()
-      },
-      onstop() {
-        if (that.isWorkingTime) that.pauseBackgroundMusic()
-
-        that.tick = that.totalTime
-        that.progress = 100
-        that.isPlaying = false
-        that.isPause = false
-      },
-      onend() {
-        if (that.isWorkingTime) that.pauseBackgroundMusic()
-
-        if (that.status === 0) {
-          that.notification.whenEndOfWorkingTime && showNotice('专注结束了，休息一下吧')
-          that.isUTools && that.notification.showWindowWhenEndOfWorkingTime && that.showUToolsMainWindow()
-        } else if (that.status === 1) {
-          that.notification.whenEndOfRestingTime && showNotice('休息结束啦')
-        }
-        that.tick = 0
-        that.progress = 0
-        that.isPlaying = false
-
-        statistics.add(that.showTip, that.totalTime / 60, that.currentStatus)
-
-        that.switchClock()
-
-        setTimeout(() => {
-          that.tick = that.totalTime
-          that.progress = 100
-        }, that.resetTimeout)
-      }
-    })
-
-    if (isUTools()) {
-      this.uToolsMode()
+  activated() {
+    if (!this.isClocking) {
+      this.initPage()
     }
-
-    this.$bus.$on('startTaskTimer', this.startTaskTimer)
   },
   beforeDestroy() {
     this.timer.stop()
@@ -370,6 +292,70 @@ export default {
     this.$bus.$emit('stopAudio')
   },
   methods: {
+    initPage() {
+      window.document.documentElement.style.overflowY = 'hidden'
+
+      const that = this
+      this.tick = this.totalTime
+      this.timer = new Timer({
+        tick: 1,
+        ontick(ms) {
+          let s = Math.round(ms / 1000)
+          that.tick = s
+          that.progress = s * that.ratio
+          if (that.status === 0 && that.notification.beforeEndOfWorkingTime &&
+            that.tick === that.notifyBeforeEndOfTime) {
+            showNotice('准备休息啦', 5000)
+          }
+        },
+        onstart() {
+          that.isPlaying = true
+          that.isPause = false
+          if (that.isWorkingTime) that.playBackgroundMusic()
+        },
+        onpause() {
+          that.isPlaying = false
+          that.isPause = true
+          if (that.isWorkingTime) that.pauseBackgroundMusic()
+        },
+        onstop() {
+          if (that.isWorkingTime) that.pauseBackgroundMusic()
+
+          that.tick = that.totalTime
+          that.progress = 100
+          that.isPlaying = false
+          that.isPause = false
+        },
+        onend() {
+          if (that.isWorkingTime) that.pauseBackgroundMusic()
+
+          if (that.isWorkingTime) {
+            that.notification.whenEndOfWorkingTime && showNotice('专注结束了，休息一下吧')
+            that.isUTools && that.notification.showWindowWhenEndOfWorkingTime && that.showUToolsMainWindow()
+          } else if (that.isRestingTime) {
+            that.notification.whenEndOfRestingTime && showNotice('休息结束啦')
+          }
+          that.tick = 0
+          that.progress = 0
+          that.isPlaying = false
+
+          statistics.add(that.showTip, that.totalTime / 60, that.currentStatus)
+
+          that.switchClock()
+
+          setTimeout(() => {
+            that.tick = that.totalTime
+            that.progress = 100
+          }, that.resetTimeout)
+        }
+      })
+
+      if (isUTools()) {
+        this.uToolsMode()
+      }
+
+      this.$bus.$on('startTaskTimer', this.startTaskTimer)
+    },
     showUToolsMainWindow() {
       utools.redirect('休息一下', null)
       let isShow = false
@@ -470,17 +456,17 @@ export default {
       this.dialog.switchTaskDialog = false
     },
     restoreTimer() {
-      if (this.totalTime - this.tick >= 60) {
+      if ((Date.now() - this.timer._.start) / 1000 >= 60) {
         statistics.add(this.showTip, Math.floor(this.tick / 60), this.currentStatus)
       }
       this.timer.stop()
       this.dialog.restoreDialog = false
     },
     toSetting() {
-      this.isClocking ? this.dialog.quitClockToSettingDialog = true : this.$router.push('/setting')
+      this.$router.push('/setting')
     },
     toStatistic() {
-      this.isClocking ? this.dialog.quitClockToStatisticDialog = true : this.$router.push('/statistic')
+      this.$router.push('/statistic')
     },
     uToolsMode() {
       utools.onPluginEnter(({code}) => {
@@ -528,7 +514,7 @@ $colorOnLight: #6C6C6C
 .font-light
   color: $colorOnLight
 
-#page
+#home-page
   position: absolute
   width: 100%
   height: 100%

@@ -1,7 +1,11 @@
 <template>
   <v-app>
     <v-main>
-      <router-view />
+      <v-slide-x-transition>
+        <keep-alive>
+          <router-view />
+        </keep-alive>
+      </v-slide-x-transition>
     </v-main>
   </v-app>
 </template>

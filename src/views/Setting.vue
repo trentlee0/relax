@@ -1,5 +1,5 @@
 <template>
-  <div id="page">
+  <div id="setting-page">
     <v-toolbar flat>
       <v-btn
         icon
@@ -434,13 +434,14 @@ export default {
       return isUTools()
     }
   },
-  created() {
-    this.initState()
-  },
-  mounted() {
-    window.document.documentElement.style.overflowY = 'auto'
+  activated() {
+    this.initPage()
   },
   methods: {
+    initPage() {
+      this.initState()
+      window.document.documentElement.style.overflowY = 'auto'
+    },
     initState() {
       this.workingTime = this.workingTimeFromStore
       this.restingTime = this.restingTimeFromStore

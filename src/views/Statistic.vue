@@ -1,5 +1,5 @@
 <template>
-  <div id="page">
+  <div id="statistic-page">
     <v-toolbar flat>
       <v-btn
         icon
@@ -32,17 +32,76 @@
 
 
     <v-tabs centered v-model="tab">
-      <v-tab>时间线</v-tab>
       <v-tab>趋势</v-tab>
+      <v-tab>时间线</v-tab>
     </v-tabs>
 
     <v-tabs-items v-model="tab">
+      <v-tab-item>
+        <v-row class="my-3 justify-center">
+          <v-chip :color="activeChip === 0 ? 'primary' : ''" style="cursor: pointer; user-select: none;">近7天专注</v-chip>
+        </v-row>
+
+        <v-card
+          v-show="activeChip === 0"
+          flat
+          class="ma-auto"
+          max-width="1000"
+        >
+          <v-card-title>
+            <MyIcon
+              class="mr-12"
+              color="primary"
+              size="56"
+            >
+              mdi-laptop
+            </MyIcon>
+            <v-row align="start">
+              <div class="text-caption grey--text text-uppercase">
+                平均每天
+              </div>
+              <div>
+                <span
+                  class="text-h5 font-weight-black"
+                  v-text="minutesAvg || '—'"
+                ></span>
+                <strong v-if="minutesAvg">M</strong>
+              </div>
+            </v-row>
+          </v-card-title>
+          <v-card-text>
+            <v-sheet elevation="2" class="pa-6">
+              <v-sparkline
+                :labels="dailyMinuteLabels"
+                :value="dailyMinutes"
+                line-width="1"
+                padding="10"
+                stroke-linecap="round"
+                gradient-direction="top"
+                type="trend"
+                auto-draw
+                auto-line-width
+                label-size="5"
+                smooth
+              >
+              </v-sparkline>
+            </v-sheet>
+          </v-card-text>
+
+          <v-card-text>
+            <div class="text-h4 font-weight-thin text-center">
+              最近7天专注时长
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-tab-item>
+
       <v-tab-item>
         <v-card
           v-if="isEmpty"
           flat
           class="ma-auto"
-          max-width="1000">
+          max-width="600">
           <div class="text-center pa-15">暂无数据</div>
         </v-card>
         <v-card
@@ -154,65 +213,6 @@
           </v-timeline>
         </v-card>
       </v-tab-item>
-
-      <v-tab-item>
-        <v-row class="my-3 justify-center">
-          <v-chip :color="activeChip === 0 ? 'primary' : ''" style="cursor: pointer;">近7天专注</v-chip>
-        </v-row>
-
-        <v-card
-          v-show="activeChip === 0"
-          flat
-          class="ma-auto"
-          max-width="1000"
-        >
-          <v-card-title>
-            <MyIcon
-              class="mr-12"
-              color="primary"
-              size="64"
-            >
-              mdi-laptop
-            </MyIcon>
-            <v-row align="start">
-              <div class="text-caption grey--text text-uppercase">
-                平均每天
-              </div>
-              <div>
-                <span
-                  class="text-h4 font-weight-black"
-                  v-text="minutesAvg || '—'"
-                ></span>
-                <strong v-if="minutesAvg">M</strong>
-              </div>
-            </v-row>
-          </v-card-title>
-          <v-card-text>
-            <v-sheet elevation="2" class="pa-6">
-              <v-sparkline
-                :labels="dailyMinuteLabels"
-                :value="dailyMinutes"
-                line-width="1"
-                padding="10"
-                stroke-linecap="round"
-                gradient-direction="top"
-                type="trend"
-                auto-draw
-                auto-line-width
-                label-size="5"
-                smooth
-              >
-              </v-sparkline>
-            </v-sheet>
-          </v-card-text>
-
-          <v-card-text>
-            <div class="text-h4 font-weight-thin text-center">
-              最近7天专注时长
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-tab-item>
     </v-tabs-items>
   </div>
 </template>
@@ -257,36 +257,38 @@ export default {
       return Math.ceil(sum / length)
     }
   },
-  created() {
-    const dateFormat = 'YYYY年MM月DD日'
-    statistics.getStatisticData(dateFormat)
-      .then(res => {
-        const data = res.data
-        if (!data || !data.allDayGroups) this.isEmpty = true
-
-        this.dayGroups = data.allDayGroups
-        this.dailyMinutes = data.last7daysDurations
-        this.dailyMinuteLabels = data.last7daysDurations.map(item => item + 'm')
-        this.dailyMinutes.splice(0, 0, 0)
-        this.dailyMinuteLabels.splice(0, 0, 'Before')
-
-        this.isCompleted = true
-      })
-  },
-  mounted() {
-    window.document.documentElement.style.overflowY = 'overlay'
-
-    window.addEventListener('scroll', () => {
-      let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
-      let windowHeight = document.documentElement.clientHeight || document.body.clientHeight
-      let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-      let scrollBottom = scrollHeight - windowHeight - scrollTop
-      if (scrollBottom <= 0) {
-        if (this.currentPage < this.pageTotal) this.currentPage++
-      }
-    })
+  activated() {
+    this.initPage()
   },
   methods: {
+    initPage() {
+      const dateFormat = 'YYYY年MM月DD日'
+      statistics.getStatisticData(dateFormat)
+        .then(res => {
+          const data = res.data
+          if (!data || !data.allDayGroups) this.isEmpty = true
+
+          this.dayGroups = data.allDayGroups
+          this.dailyMinutes = data.last7daysDurations
+          this.dailyMinuteLabels = data.last7daysDurations.map(item => item + 'm')
+          this.dailyMinutes.splice(0, 0, 0)
+          this.dailyMinuteLabels.splice(0, 0, 'Before')
+
+          this.isCompleted = true
+        })
+
+      window.document.documentElement.style.overflowY = 'overlay'
+
+      window.addEventListener('scroll', () => {
+        let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
+        let windowHeight = document.documentElement.clientHeight || document.body.clientHeight
+        let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+        let scrollBottom = scrollHeight - windowHeight - scrollTop
+        if (scrollBottom <= 0) {
+          if (this.currentPage < this.pageTotal) this.currentPage++
+        }
+      })
+    },
     formatTime(timestamp) {
       return dayjs(timestamp).format('HH:mm')
     },
@@ -309,5 +311,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="sass" scoped>
+#statistic-page
+  height: 100%
 </style>
