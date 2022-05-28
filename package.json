@@ -17,6 +17,7 @@
     "howler": "^2.2.3",
     "jinrishici": "^1.0.6",
     "localforage": "^1.10.0",
+    "register-service-worker": "^1.7.2",
     "timer.js": "^1.0.4",
     "voca": "^1.4.0",
     "vue": "^2.6.11",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@types/file-saver": "^2.0.5",
     "@vue/cli-plugin-babel": "~4.5.13",
+    "@vue/cli-plugin-pwa": "~4.0.0",
     "@vue/cli-plugin-router": "~4.5.13",
     "@vue/cli-plugin-vuex": "~4.5.13",
     "@vue/cli-service": "~4.5.13",
