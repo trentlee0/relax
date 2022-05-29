@@ -21,6 +21,17 @@ class Todo {
     return this._instance
   }
 
+  unshiftTask(task) {
+    return new Promise((resolve, reject) => {
+      this.getAll().then(res => {
+        const tasks = res.data || []
+        const hasTask = tasks.filter(task => !task.done).map(task => task.title).includes(task.title)
+        if (!hasTask) tasks.unshift(task)
+        this.saveAll(tasks).then(() => resolve()).catch(() => reject())
+      }).catch(() => reject())
+    })
+  }
+
   getAll() {
     return this.storage.get(dataKey.Todo)
   }

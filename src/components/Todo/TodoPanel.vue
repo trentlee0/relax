@@ -198,8 +198,6 @@ export default {
     }
   },
   created() {
-    todos.getAll().then(res => this.tasks = res.data || [])
-
     this.initState()
   },
   mounted() {
@@ -218,6 +216,8 @@ export default {
   },
   methods: {
     initState() {
+      todos.getAll().then(res => this.tasks = res.data || [])
+
       if (isUTools()) {
         const user = utools.getUser()
         if (user) {

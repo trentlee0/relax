@@ -24,7 +24,14 @@
       "explain": "开始专注倒计时",
       "cmds": [
         "开始专注计时",
-        "Start To Work"
+        "Start To Work",
+        {
+          "type": "over",
+          "label": "专注任务",
+          "match": "/[\\\\\\/\\t\\n]/",
+          "minLength": 1,
+          "maxLength": 30
+        }
       ]
     },
     {

@@ -50,9 +50,9 @@
         >
           <v-card-title>
             <MyIcon
-              class="mr-12"
+              class="mr-8"
               color="primary"
-              size="56"
+              size="50"
             >
               mdi-laptop
             </MyIcon>
@@ -63,9 +63,9 @@
               <div>
                 <span
                   class="text-h5 font-weight-black"
-                  v-text="minutesAvg || '—'"
+                  v-text="minutesAvg"
                 ></span>
-                <strong v-if="minutesAvg">M</strong>
+                <strong>M</strong>
               </div>
             </v-row>
           </v-card-title>
@@ -86,12 +86,6 @@
               >
               </v-sparkline>
             </v-sheet>
-          </v-card-text>
-
-          <v-card-text>
-            <div class="text-h4 font-weight-thin text-center">
-              最近7天专注时长
-            </div>
           </v-card-text>
         </v-card>
       </v-tab-item>

@@ -4,7 +4,7 @@
       :value="show"
       max-width="340"
       @click:outside="no"
-      @keydown="no"
+      @keydown.esc.stop="no"
     >
       <v-card>
         <v-card-title class="text-h6">

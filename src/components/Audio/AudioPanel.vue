@@ -1,6 +1,10 @@
 <template>
-  <div id="container">
-    <v-bottom-sheet v-model="audioPanel">
+  <div>
+    <v-bottom-sheet
+      :value="isShow"
+      @click:outside="closeEvent"
+      @keydown.esc.stop="closeEvent"
+    >
       <v-sheet class="text-center pa-6">
         <v-row dense>
           <v-col cols="2">
@@ -8,7 +12,6 @@
               color="secondary"
               class="d-flex align-center justify-center align-center"
               :class="{active: currentIndex === noneAudioIndex}"
-              dark
               height="80"
               title="关闭背景音乐"
               @click="changeAudio(noneAudioIndex)"
@@ -49,20 +52,6 @@
         </v-row>
       </v-sheet>
     </v-bottom-sheet>
-    <div class="music-btn">
-      <v-btn
-        icon
-        fab
-        :dark="dark"
-        :light="!dark"
-        @click.native="openAudioPanel"
-        title="背景音"
-      >
-        <MyIcon v-show="isVolumeOff">mdi-volume-off</MyIcon>
-        <MyIcon v-show="!isVolumeOff && isMuted">mdi-volume-mute</MyIcon>
-        <MyIcon v-show="!isVolumeOff && !isMuted">mdi-volume-high</MyIcon>
-      </v-btn>
-    </div>
   </div>
 </template>
 
@@ -77,9 +66,9 @@ export default {
   name: 'AudioPanel',
   components: {MyIcon},
   props: {
-    dark: {
+    isShow: {
       type: Boolean,
-      default: true
+      default: false
     }
   },
   data() {
@@ -104,6 +93,12 @@ export default {
     },
     isMuted() {
       return this.muted
+    },
+    isVolumeMute() {
+      return !this.isVolumeOff && this.isMuted
+    },
+    isVolumeHigh() {
+      return !this.isVolumeOff && !this.isMuted
     },
     viewVolume: {
       set(val) {
@@ -218,8 +213,25 @@ export default {
       this.$store.commit('SET_BACKGROUND_MUSIC', [this.currentAudioCardName, this.realVolume])
       this.playAudio()
     },
-    openAudioPanel() {
-      this.audioPanel = true
+    closeEvent() {
+      this.$emit('close')
+    }
+  },
+  watch: {
+    isVolumeOff(newVal) {
+      if (newVal) {
+        this.$emit('volumeChange', {mode: 'volumeOff'})
+      }
+    },
+    isVolumeMute(newVal) {
+      if (newVal) {
+        this.$emit('volumeChange', {mode: 'volumeMute'})
+      }
+    },
+    isVolumeHigh(newVal) {
+      if (newVal) {
+        this.$emit('volumeChange', {mode: 'volumeHigh'})
+      }
     }
   }
 }

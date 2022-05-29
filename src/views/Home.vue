@@ -31,7 +31,19 @@
         <MyIcon>mdi-cog-outline</MyIcon>
       </v-btn>
 
-      <AudioPanel class="audio-btn" :dark="darkStyle"></AudioPanel>
+      <v-btn
+        icon
+        fab
+        class="audio-btn"
+        :dark="darkStyle"
+        :light="!darkStyle"
+        @click.native="audioPanel = true"
+        title="背景音"
+      >
+        <MyIcon v-show="volumeMode === 'volumeOff'">mdi-volume-off</MyIcon>
+        <MyIcon v-show="volumeMode === 'volumeMute'">mdi-volume-mute</MyIcon>
+        <MyIcon v-show="volumeMode === 'volumeHigh'">mdi-volume-high</MyIcon>
+      </v-btn>
 
       <v-btn
         :dark="darkStyle"
@@ -45,6 +57,14 @@
         <MyIcon>mdi-format-list-checks</MyIcon>
       </v-btn>
     </div>
+
+    <AudioPanel
+      :isShow="audioPanel"
+      :dark="darkStyle"
+      @close="closeAudioPanelEvent"
+      @volumeChange="volumeChangeEvent"
+    >
+    </AudioPanel>
 
     <v-navigation-drawer
       v-model="drawer"
@@ -65,7 +85,7 @@
 
     <div id="main">
       <div class="container" :style="{minHeight: progressContainer + 'px'}">
-        <div class="quote-div " :style="{marginBottom: $vuetify.breakpoint.name === 'xs' ? '32px' : '10px'}">
+        <div class="quote-div" :style="{marginBottom: quoteMarginBottom + 'px'}">
           <div
             class="quote-content-div"
             :class="fontColorClass"
@@ -109,7 +129,7 @@
             :dark="darkStyle"
             :light="!darkStyle"
             title="切换计时器"
-            @click.stop="isClocking ? dialog.switchClockDialog = true : switchClock()"
+            @click.stop="handleSwitchClick"
           >
             <MyIcon>mdi-rotate-3d-variant</MyIcon>
           </v-btn>
@@ -131,7 +151,7 @@
             :dark="darkStyle"
             :light="!darkStyle"
             title="结束计时"
-            @click.stop="isClocking && (dialog.restoreDialog = true)"
+            @click.stop="handleRestoreClick"
           >
             <MyIcon>crop-square</MyIcon>
           </v-btn>
@@ -154,6 +174,14 @@
       @cancel="dialog.restoreDialog = false"
     >
     </Dialog>
+
+    <v-snackbar
+      v-model="snackbar"
+      :timeout="2000"
+      min-width="150"
+    >
+      <strong class="pl-2"> {{ snackbarMsg }}</strong>
+    </v-snackbar>
   </div>
 </template>
 
@@ -174,6 +202,8 @@ import {mapState} from 'vuex'
 import {getSubjectHexColor, hexToBrightness} from '@/util/colors'
 import TodoPanel from '@/components/Todo/TodoPanel'
 import MyIcon from '@/components/MyIcon'
+import todos from '@/store/todos'
+import hotkeys from 'hotkeys-js'
 
 
 export default {
@@ -200,7 +230,12 @@ export default {
       isSwitchAndStartTimer: false,
       drawer: false,
       darkStyle: true,
-      tempTask: null
+      tempTask: null,
+      snackbar: false,
+      snackbarMsg: '',
+      currentTime: 0,
+      audioPanel: false,
+      volumeMode: 'volumeOff'
     }
   },
   computed: {
@@ -232,6 +267,10 @@ export default {
         default:
           return 500
       }
+    },
+    quoteMarginBottom() {
+      if (this.isUTools) return 10
+      return this.$vuetify.breakpoint.name === 'xs' ? 32 : 10
     },
     tickTime() {
       return formatSecond(this.tick)
@@ -285,6 +324,22 @@ export default {
     if (!this.isClocking) {
       this.initPage()
     }
+
+    hotkeys('d', (event) => {
+      event.stopPropagation()
+      this.handleSwitchClick()
+    })
+    hotkeys('f', (event) => {
+      event.stopPropagation()
+      this.startTimer()
+    })
+    hotkeys('g', (event) => {
+      event.stopPropagation()
+      this.handleRestoreClick()
+    })
+  },
+  deactivated() {
+    hotkeys.unbind()
   },
   beforeDestroy() {
     this.timer.stop()
@@ -297,6 +352,7 @@ export default {
 
       const that = this
       this.tick = this.totalTime
+      this.currentTime = this.totalTime
       this.timer = new Timer({
         tick: 1,
         ontick(ms) {
@@ -370,6 +426,12 @@ export default {
       }
       attempt()
     },
+    closeAudioPanelEvent() {
+      this.audioPanel = false
+      this.$nextTick(() => {
+        document.querySelector('.audio-btn').blur()
+      })
+    },
     showDrawer() {
       this.$bus.$emit('toTodoPanel')
       this.drawer = true
@@ -377,10 +439,17 @@ export default {
     startTaskTimer(task) {
       this.tempTask = task
       if (this.isWorkingTime && this.isClocking) {
-        this.customTip !== task.title && (this.dialog.switchTaskDialog = true)
+        if (this.customTip === task.title) {
+          this.showSnackbar('正在专注中')
+        } else {
+          this.dialog.switchTaskDialog = true
+        }
       } else {
         this.switchTask()
       }
+    },
+    volumeChangeEvent({mode}) {
+      this.volumeMode = mode
     },
     getImage() {
       if (this.bgColor) {
@@ -419,6 +488,18 @@ export default {
     switchMuteBackgroundMusic() {
       this.$bus.$emit('switchMute')
     },
+    handleSwitchClick() {
+      if (this.isClocking) {
+        this.dialog.switchClockDialog = !this.dialog.switchClockDialog
+      } else {
+        this.switchClock()
+      }
+    },
+    handleRestoreClick() {
+      if (this.isClocking) {
+        this.dialog.restoreDialog = !this.dialog.restoreDialog
+      }
+    },
     startTimer() {
       this.isPlaying ? this.timer.pause() : this.timer.start(this.tick)
     },
@@ -456,8 +537,8 @@ export default {
       this.dialog.switchTaskDialog = false
     },
     restoreTimer() {
-      if ((Date.now() - this.timer._.start) / 1000 >= 60) {
-        statistics.add(this.showTip, Math.floor(this.tick / 60), this.currentStatus)
+      if (this.currentTime - this.tick >= 60) {
+        statistics.add(this.showTip, Math.floor((this.currentTime - this.tick) / 60), this.currentStatus)
       }
       this.timer.stop()
       this.dialog.restoreDialog = false
@@ -468,16 +549,31 @@ export default {
     toStatistic() {
       this.$router.push('/statistic')
     },
+    showSnackbar(msg) {
+      this.snackbar = true
+      this.snackbarMsg = msg
+    },
     uToolsMode() {
-      utools.onPluginEnter(({code}) => {
+      utools.onPluginEnter(({code, type, payload}) => {
         switch (code) {
           case uToolsFeatureCodes.Work:
-            if (!this.isClocking) {
-              this.switchToWork()
-              this.startTimer()
-            } else if (this.isRestingTime) {
-              this.dialog.switchClockDialog = true
-              this.isSwitchAndStartTimer = true
+            if (type === 'over') {
+              payload = payload.trim()
+              const newTask = {
+                id: Date.now(),
+                done: false,
+                title: payload
+              }
+              this.startTaskTimer(newTask)
+              todos.unshiftTask(newTask)
+            } else {
+              if (!this.isClocking) {
+                this.switchToWork()
+                this.startTimer()
+              } else if (this.isRestingTime) {
+                this.dialog.switchClockDialog = true
+                this.isSwitchAndStartTimer = true
+              }
             }
             break
           case uToolsFeatureCodes.Rest:
@@ -570,7 +666,7 @@ $colorOnLight: #6C6C6C
       color: white
       text-align: center
       margin: 10px 45px
-      line-height: 30px
+      line-height: 26px
       font-size: large
 
     .timer-div
