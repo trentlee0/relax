@@ -1,6 +1,6 @@
 import car from '@/assets/audio/car.ogg'
 import creek from '@/assets/audio/creek.ogg'
-import fire from '@/assets/audio/fire.mp3'
+import fire from '@/assets/audio/fire.ogg'
 import forest from '@/assets/audio/forest.ogg'
 import leaves from '@/assets/audio/leaves.ogg'
 import night from '@/assets/audio/night.ogg'

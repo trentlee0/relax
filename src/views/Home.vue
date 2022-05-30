@@ -325,15 +325,15 @@ export default {
       this.initPage()
     }
 
-    hotkeys('d', (event) => {
+    hotkeys('c', (event) => {
       event.stopPropagation()
       this.handleSwitchClick()
     })
-    hotkeys('f', (event) => {
+    hotkeys('s', (event) => {
       event.stopPropagation()
       this.startTimer()
     })
-    hotkeys('g', (event) => {
+    hotkeys('e', (event) => {
       event.stopPropagation()
       this.handleRestoreClick()
     })
