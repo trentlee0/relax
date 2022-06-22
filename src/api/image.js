@@ -27,9 +27,13 @@ const IMAGE_REQUESTS = {
   },
   [backgroundType.IMAGE]: () => {
     return new Promise((resolve, reject) => {
-      settings.getTempCache(backgroundType.IMAGE)
-        .then(res => resolve(res.data))
-        .catch(err => reject(err))
+      if (isUTools()) {
+        resolve(store.state.background.val)
+      } else {
+        settings.getTempCache(backgroundType.IMAGE)
+          .then(res => resolve(res.data))
+          .catch(err => reject(err))
+      }
     })
   },
   [backgroundType.XIAOWAI]: () => {

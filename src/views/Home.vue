@@ -128,7 +128,7 @@
             fab
             :dark="darkStyle"
             :light="!darkStyle"
-            title="切换计时器"
+            title="切换计时器 (C)"
             @click.stop="handleSwitchClick"
           >
             <MyIcon>mdi-rotate-3d-variant</MyIcon>
@@ -139,7 +139,7 @@
             large
             :dark="darkStyle"
             :light="!darkStyle"
-            title="开始计时"
+            title="开始计时 (S)"
             @click.stop="startTimer"
           >
             <MyIcon v-show="isPlaying">mdi-pause-circle</MyIcon>
@@ -150,7 +150,7 @@
             fab
             :dark="darkStyle"
             :light="!darkStyle"
-            title="结束计时"
+            title="结束计时 (E)"
             @click.stop="handleRestoreClick"
           >
             <MyIcon>crop-square</MyIcon>
@@ -244,7 +244,8 @@ export default {
       quote: state => state.quote,
       workingTime: state => state.workingTime,
       restingTime: state => state.restingTime,
-      notification: state => state.notification
+      notification: state => state.notification,
+      automaticTiming: state => state.automaticTiming
     }),
     progressSize() {
       if (this.isUTools) return 290
@@ -402,6 +403,13 @@ export default {
           setTimeout(() => {
             that.tick = that.totalTime
             that.progress = 100
+
+            if (that.automaticTiming.working && that.isWorkingTime) {
+              that.startTimer()
+            }
+            if (that.automaticTiming.resting && that.isRestingTime) {
+              that.startTimer()
+            }
           }, that.resetTimeout)
         }
       })

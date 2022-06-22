@@ -98,7 +98,8 @@ export const dataKey = {
   Notification: 'notification',
   Statistics: 'statistics',
   BackgroundMusic: 'backgroundMusic',
-  Todo: 'todo'
+  Todo: 'todo',
+  AutomaticTiming: 'automaticTiming'
 }
 
 /**
@@ -120,6 +121,10 @@ export const defaultSettings = {
     beforeEndOfWorkingTime: false,
     whenEndOfRestingTime: true,
     showWindowWhenEndOfWorkingTime: false
+  },
+  automaticTiming: {
+    working: false,
+    resting: false
   },
   backgroundMusic: {
     selected: 'none',

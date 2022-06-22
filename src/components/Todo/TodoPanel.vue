@@ -206,6 +206,7 @@ export default {
     this.$bus.$on('updateTask', this.updateTask)
     this.$bus.$on('checkedTask', this.checkedTask)
     this.$bus.$on('toTodoPanel', this.initState)
+    this.$bus.$on('dropTodoItem', this.dropTodoItem)
   },
   beforeDestroy() {
     this.$bus.$off('startTask')
@@ -213,8 +214,17 @@ export default {
     this.$bus.$off('updateTask')
     this.$bus.$off('checkedTask')
     this.$bus.$off('toTodoPanel')
+    this.$bus.$off('dropTodoItem')
   },
   methods: {
+    dropTodoItem({fromIndex, toIndex}) {
+      const target = this.tasks[fromIndex]
+      const doneTasks = this.doneTasks
+      const todoTasks =this.todoTasks
+      todoTasks.splice(fromIndex, 1)
+      todoTasks.splice(toIndex, 0, target)
+      this.tasks = todoTasks.concat(doneTasks)
+    },
     initState() {
       todos.getAll().then(res => this.tasks = res.data || [])
 

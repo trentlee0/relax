@@ -1,7 +1,13 @@
 <template>
   <div>
     <v-card v-if="tasks.length > 0">
-      <template v-for="(task, i) in tasks">
+      <div
+        :draggable="!task.done"
+        @dragstart="dragEnterEvent($event, i)"
+        @drop="dropEvent($event, i)"
+        @dragover.prevent
+        v-for="(task, i) in tasks"
+      >
         <v-divider
           v-if="i !== 0"
           :key="`${task.id}-divider`"
@@ -14,7 +20,7 @@
           @changeChecked="checkedClick"
           @contextmenu="handleContextmenu"
         ></TodoItem>
-      </template>
+      </div>
     </v-card>
 
     <v-menu
@@ -67,6 +73,14 @@ export default {
     }
   },
   methods: {
+    dragEnterEvent(event, index) {
+      event.dataTransfer.setData('fromIndex', index)
+    },
+    dropEvent(event, toIndex) {
+      event.preventDefault()
+      const fromIndex = event.dataTransfer.getData('fromIndex')
+      this.$bus.$emit('dropTodoItem', {fromIndex, toIndex})
+    },
     handleContextmenu(args) {
       const e = args.event
       e.preventDefault()

@@ -3,6 +3,7 @@ import Vuex from 'vuex'
 import {backgroundType, dataKey, defaultSettings, quoteType} from '@/config/constants'
 import settings from '@/store/settings'
 import {deepCopy} from '@/util/commons'
+import {isUTools} from '@/util/platforms'
 
 Vue.use(Vuex)
 
@@ -13,7 +14,8 @@ export default new Vuex.Store({
     notification: settings.getSync(dataKey.Notification) || deepCopy(defaultSettings.notification),
     workingTime: settings.getSync(dataKey.WorkingTime) || deepCopy(defaultSettings.workingTime),
     restingTime: settings.getSync(dataKey.RestingTime) || deepCopy(defaultSettings.restingTime),
-    backgroundMusic: settings.getSync(dataKey.BackgroundMusic) || deepCopy(defaultSettings.backgroundMusic)
+    backgroundMusic: settings.getSync(dataKey.BackgroundMusic) || deepCopy(defaultSettings.backgroundMusic),
+    automaticTiming: settings.getSync(dataKey.AutomaticTiming) || deepCopy(defaultSettings.automaticTiming)
   },
   mutations: {
     UPDATE_BACKGROUND(state, [type, val]) {
@@ -21,8 +23,10 @@ export default new Vuex.Store({
       // 仅仅用户自定义图片/网络图片/颜色背景才需要保存
       if (val) {
         if (type === backgroundType.COLOR || type === backgroundType.NETWORK) state.background.val = val
-        else if (type === backgroundType.IMAGE) settings.setTempCache(type, val)
-        else state.background.val = ''
+        else if (type === backgroundType.IMAGE) {
+          if (isUTools()) state.background.val = val
+          else settings.setTempCache(type, val)
+        } else state.background.val = ''
       }
       settings.setSync(dataKey.Background, state.background)
     },
@@ -60,6 +64,10 @@ export default new Vuex.Store({
       state.backgroundMusic['selected'] = selected
       state.backgroundMusic['volume'] = volume
       settings.setSync(dataKey.BackgroundMusic, state.backgroundMusic)
+    },
+    SET_AUTOMATIC_TIMING(state, automaticTiming) {
+      state.automaticTiming = automaticTiming
+      settings.setSync(dataKey.AutomaticTiming, automaticTiming)
     }
   },
   getters: {

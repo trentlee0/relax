@@ -105,6 +105,20 @@
             ></v-slider>
           </v-list-item-title>
         </v-list-item>
+
+        <v-list-item>
+          <v-switch
+            v-model="automaticTiming.working"
+            label="自动专注计时"
+          ></v-switch>
+        </v-list-item>
+
+        <v-list-item>
+          <v-switch
+            v-model="automaticTiming.resting"
+            label="自动休息计时"
+          ></v-switch>
+        </v-list-item>
       </v-list>
 
       <v-divider color=""></v-divider>
@@ -395,7 +409,8 @@ export default {
       importSettingFile: null,
       importStatisticFile: null,
       workingTime: 0,
-      restingTime: 0
+      restingTime: 0,
+      automaticTiming: {}
     }
   },
   computed: {
@@ -404,7 +419,8 @@ export default {
       quote: state => state.quote,
       workingTimeFromStore: state => state.workingTime / 60,
       restingTimeFromStore: state => state.restingTime / 60,
-      notification: state => state.notification
+      notification: state => state.notification,
+      automaticTimingFromStore: state => state.automaticTiming
     }),
     quoteSourceItems() {
       return Object
@@ -447,6 +463,7 @@ export default {
       this.restingTime = this.restingTimeFromStore
       this.backgroundSelectedItem = backgroundChinese[this.background.type]
       this.quoteSourceSelectedItem = quoteChinese[this.quote.type]
+      this.automaticTiming = {...this.automaticTimingFromStore}
 
       if (this.$store.state.quote.val) this.customQuote = this.$store.state.quote.val
 
@@ -486,6 +503,7 @@ export default {
         this.$store.commit('SET_WORKING_TIME', this.workingTime * 60)
         this.$store.commit('SET_RESTING_TIME', this.restingTime * 60)
         this.$store.commit('SET_NOTIFICATION', this.notification)
+        this.$store.commit('SET_AUTOMATIC_TIMING', {...this.automaticTiming})
 
         this.showSuccessSnackBar('保存成功')
       } catch (err) {
@@ -531,10 +549,14 @@ export default {
     },
     selectImageFile(file) {
       if (!file) return
-      let reader = new FileReader()
-      reader.readAsArrayBuffer(file)
-      reader.onload = () => {
-        if (this.imageSizeValid) this.bgImage = arrayBufferToBase64ImagePNG(reader.result)
+      if (this.isUTools) {
+        this.bgImage = file.path
+      } else {
+        let reader = new FileReader()
+        reader.readAsArrayBuffer(file)
+        reader.onload = () => {
+          if (this.imageSizeValid) this.bgImage = arrayBufferToBase64ImagePNG(reader.result)
+        }
       }
     },
     changeNetworkImage() {

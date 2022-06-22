@@ -72,6 +72,7 @@ class Setting {
     this.removeSync(dataKey.WorkingTime)
     this.removeSync(dataKey.RestingTime)
     this.removeSync(dataKey.BackgroundMusic)
+    this.removeSync(dataKey.AutomaticTiming)
   }
 
   /**
@@ -83,6 +84,7 @@ class Setting {
     this.setSync(dataKey.Notification, setting[dataKey.Notification])
     this.setSync(dataKey.WorkingTime, setting[dataKey.WorkingTime])
     this.setSync(dataKey.RestingTime, setting[dataKey.RestingTime])
+    this.setSync(dataKey.AutomaticTiming, setting[dataKey.AutomaticTiming])
   }
 
   /**
@@ -133,12 +135,12 @@ class Setting {
     return new Promise((resolve, reject) => {
       // 处理自定义图片导出问题
       if (data.background.type === backgroundType.IMAGE) {
-        this.getTempCache(backgroundType.IMAGE).then(res => {
-          data.background.val = res.data
-          exportJSON(data, filename)
-            .then(() => resolve(SuccessMsg.emptyInstance()))
-            .catch(err => reject(err))
-        })
+        // this.getTempCache(backgroundType.IMAGE).then(res => {
+        //   data.background.val = res.data
+        exportJSON(data, filename)
+          .then(() => resolve(SuccessMsg.emptyInstance()))
+          .catch(err => reject(err))
+        // })
       } else {
         exportJSON(data, filename)
           .then(() => resolve(SuccessMsg.emptyInstance()))
@@ -175,11 +177,11 @@ class Setting {
 
           // 处理自定义图片导入问题
           if (data.background.type === backgroundType.IMAGE) {
-            this.setTempCache(backgroundType.IMAGE, data.background.val).then(() => {
-              data.background.val = ''
-              this.setAllSync(data)
-              resolve(SuccessMsg.instance(data))
-            }).catch(err => reject(err))
+            // this.setTempCache(backgroundType.IMAGE, data.background.val).then(() => {
+            //   data.background.val = ''
+            this.setAllSync(data)
+            resolve(SuccessMsg.instance(data))
+            // }).catch(err => reject(err))
           } else {
             this.setAllSync(data)
             resolve(SuccessMsg.instance(data))
