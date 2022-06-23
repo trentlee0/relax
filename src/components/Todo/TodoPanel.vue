@@ -22,7 +22,7 @@
             </v-avatar>
             <div class="float-right font-weight-bold font-italic" style="line-height: 35px;">
               <span v-if="hasUser">{{ username }},&nbsp;</span>
-              <span>{{ greeting }}!&nbsp;&nbsp;</span>
+              <span>{{ greeting }}&nbsp;&nbsp;</span>
             </div>
             <div class="text-caption mt-1 text-right mr-1" style="clear: both;">
               今日: 专注 {{ todayWorkTimeFormat }}, 休息 {{ todayRestTimeFormat }}

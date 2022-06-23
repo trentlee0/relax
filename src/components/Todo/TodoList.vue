@@ -74,6 +74,7 @@ export default {
   },
   methods: {
     dragEnterEvent(event, index) {
+      event.dataTransfer.effectAllowed = 'move'
       event.dataTransfer.setData('fromIndex', index)
     },
     dropEvent(event, toIndex) {
