@@ -474,8 +474,12 @@ export default {
           this.networkImage = this.background.val
       }
 
-      settings.getTempCache(backgroundType.IMAGE)
-        .then(res => this.bgImage = res.data)
+      if (isUTools()) {
+        this.bgImage = this.background.val
+      } else {
+        settings.getTempCache(backgroundType.IMAGE)
+          .then(res => this.bgImage = res.data)
+      }
     },
     back() {
       this.$router.replace('/')
