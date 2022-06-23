@@ -357,6 +357,10 @@ export default {
       this.timer = new Timer({
         tick: 1,
         ontick(ms) {
+          if (ms < 0) {
+            that.stop()
+            this.onend()
+          }
           let s = Math.round(ms / 1000)
           that.tick = s
           that.progress = s * that.ratio
