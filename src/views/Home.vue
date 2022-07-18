@@ -195,12 +195,12 @@ import settings from '@/store/settings'
 import {getImageByName} from '@/api/image'
 import statistics from '@/store/statistics'
 import Dialog from '@/components/Dialog'
-import AudioPanel from '@/components/Audio/AudioPanel'
+import AudioPanel from '@/views/home/audio/AudioPanel'
 import dayjs from 'dayjs'
 import {isUTools} from '@/util/platforms'
 import {mapState} from 'vuex'
 import {getSubjectHexColor, hexToBrightness} from '@/util/colors'
-import TodoPanel from '@/components/Todo/TodoPanel'
+import TodoPanel from '@/views/home/todo/TodoPanel'
 import MyIcon from '@/components/MyIcon'
 import todos from '@/store/todos'
 import hotkeys from 'hotkeys-js'
@@ -554,6 +554,7 @@ export default {
       }
       this.timer.stop()
       this.dialog.restoreDialog = false
+      this.customTip = ''
     },
     toSetting() {
       this.$router.push('/setting')

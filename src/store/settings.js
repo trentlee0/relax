@@ -135,12 +135,9 @@ class Setting {
     return new Promise((resolve, reject) => {
       // 处理自定义图片导出问题
       if (data.background.type === backgroundType.IMAGE) {
-        // this.getTempCache(backgroundType.IMAGE).then(res => {
-        //   data.background.val = res.data
         exportJSON(data, filename)
           .then(() => resolve(SuccessMsg.emptyInstance()))
           .catch(err => reject(err))
-        // })
       } else {
         exportJSON(data, filename)
           .then(() => resolve(SuccessMsg.emptyInstance()))
@@ -157,37 +154,30 @@ class Setting {
     return new Promise((resolve, reject) => {
       importJSON(file).then(res => {
         const data = res.data
-        try {
-          if (!data || !data.background
-            || !data.quote
-            || !data.notification
-            || !data.workingTime
-            || !data.restingTime) {
-            reject(new Error('数据为空或无效文件'))
-            return
-          }
+        if (!data || !data.background
+          || !data.quote
+          || !data.notification
+          || !data.workingTime
+          || !data.restingTime) {
+          reject(new Error('数据为空或无效文件'))
+          return
+        }
 
-          // 由于跨域问题需要修改
-          if (!isUTools()) {
-            if (crossDomainBackground.indexOf(data.background.type) !== -1)
-              data.background = deepCopy(defaultSettings.background)
-            if (crossDomainQuote.indexOf(data.quote.type) !== -1)
-              data.quote = deepCopy(defaultSettings.quote)
-          }
+        // 由于跨域问题需要修改
+        if (!isUTools()) {
+          if (crossDomainBackground.indexOf(data.background.type) !== -1)
+            data.background = deepCopy(defaultSettings.background)
+          if (crossDomainQuote.indexOf(data.quote.type) !== -1)
+            data.quote = deepCopy(defaultSettings.quote)
+        }
 
-          // 处理自定义图片导入问题
-          if (data.background.type === backgroundType.IMAGE) {
-            // this.setTempCache(backgroundType.IMAGE, data.background.val).then(() => {
-            //   data.background.val = ''
-            this.setAllSync(data)
-            resolve(SuccessMsg.instance(data))
-            // }).catch(err => reject(err))
-          } else {
-            this.setAllSync(data)
-            resolve(SuccessMsg.instance(data))
-          }
-        } catch (err) {
-          reject(err)
+        // 处理自定义图片导入问题
+        if (data.background.type === backgroundType.IMAGE) {
+          this.setAllSync(data)
+          resolve(SuccessMsg.instance(data))
+        } else {
+          this.setAllSync(data)
+          resolve(SuccessMsg.instance(data))
         }
       }).catch(err => reject(err))
     })

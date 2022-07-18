@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import TodoItem from '@/components/Todo/TodoItem'
+import TodoItem from '@/views/home/todo/TodoItem'
 
 export default {
   name: 'TodoList',

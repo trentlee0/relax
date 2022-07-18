@@ -99,7 +99,7 @@
           color="error"
           icon
           fab
-          title="删除已完成任务"
+          title="清空已完成任务"
           @click="dialog = true"
         >
           <MyIcon>mdi-close-box-multiple</MyIcon>
@@ -136,7 +136,7 @@
     </div>
 
     <Dialog
-      title="删除所有已完成任务？"
+      title="清空所有已完成任务？"
       :show="dialog"
       @confirm="deleteFinishedTasks"
       @cancel="dialog = false"
@@ -146,7 +146,7 @@
 </template>
 
 <script>
-import TodoList from '@/components/Todo/TodoList'
+import TodoList from '@/views/home/todo/TodoList'
 import todos from '@/store/todos'
 import Dialog from '@/components/Dialog'
 import MyIcon from '@/components/MyIcon'

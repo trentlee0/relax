@@ -1,11 +1,12 @@
 import duration from 'dayjs/plugin/duration'
 import dayjs from 'dayjs'
-
+import * as strings from '@/util/strings'
 dayjs.extend(duration)
 
 export function formatSecond(second) {
-  return dayjs.duration(second, 's')
-    .format(parseInt(second / 3600) ? 'HH:mm:ss' : 'mm:ss')
+  let m = second / 60
+  let s = second % 60
+  return strings.format('%02d:%02d', m, s)
 }
 
 export function formatMinute(minute) {

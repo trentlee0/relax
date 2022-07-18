@@ -153,13 +153,9 @@ export class Storage {
 export class BrowserStorage extends Storage {
   get(key) {
     return new Promise((resolve, reject) => {
-      try {
-        localforage.getItem(key)
-          .then(data => resolve(SuccessMsg.instance(data)))
-          .catch(err => reject(err))
-      } catch (err) {
-        reject(err)
-      }
+      localforage.getItem(key)
+        .then(data => resolve(SuccessMsg.instance(data)))
+        .catch(err => reject(err))
     })
   }
 
@@ -245,33 +241,21 @@ export class BrowserStorage extends Storage {
 export class UToolsStorage extends Storage {
   get(key) {
     return new Promise((resolve, reject) => {
-      try {
-        resolve(SuccessMsg.instance(utools.dbStorage.getItem(key)))
-      } catch (err) {
-        reject(err)
-      }
+      resolve(SuccessMsg.instance(utools.dbStorage.getItem(key)))
     })
   }
 
   set(key, value) {
     return new Promise((resolve, reject) => {
-      try {
-        utools.dbStorage.setItem(key, value)
-        resolve(SuccessMsg.emptyInstance())
-      } catch (err) {
-        reject(err)
-      }
+      utools.dbStorage.setItem(key, value)
+      resolve(SuccessMsg.emptyInstance())
     })
   }
 
   remove(key) {
     return new Promise((resolve, reject) => {
-      try {
-        utools.dbStorage.removeItem(key)
-        resolve(SuccessMsg.emptyInstance())
-      } catch (err) {
-        reject(err)
-      }
+      utools.dbStorage.removeItem(key)
+      resolve(SuccessMsg.emptyInstance())
     })
   }
 
@@ -314,17 +298,13 @@ export class UToolsStorage extends Storage {
   queryLikeAsObject(likeKey) {
     return new Promise((resolve, reject) => {
       utools.db.promises.allDocs(likeKey).then(res => {
-        try {
-          let data = {}
-          if (!res) {
-            resolve(SuccessMsg.instance(data))
-            return
-          }
-          res.forEach(item => data[item['_id']] = {items: item['value']})
+        let data = {}
+        if (!res) {
           resolve(SuccessMsg.instance(data))
-        } catch (err) {
-          reject(err)
+          return
         }
+        res.forEach(item => data[item['_id']] = {items: item['value']})
+        resolve(SuccessMsg.instance(data))
       }).catch(err => reject(err))
     })
   }
@@ -332,17 +312,11 @@ export class UToolsStorage extends Storage {
   queryLikeAsArray(likeKey) {
     return new Promise((resolve, reject) => {
       utools.db.promises.allDocs(likeKey).then(res => {
-        try {
-          let data = []
-          if (!res) {
-            resolve(SuccessMsg.instance(data))
-            return
-          }
+        let data = []
+        if (res) {
           res.forEach(item => item['value'].forEach(e => data.push(e)))
-          resolve(SuccessMsg.instance(data))
-        } catch (err) {
-          reject(err)
         }
+        resolve(SuccessMsg.instance(data))
       }).catch(err => reject(err))
     })
   }
@@ -350,16 +324,12 @@ export class UToolsStorage extends Storage {
   removeLike(likeKey) {
     return new Promise((resolve, reject) => {
       utools.db.promises.allDocs(likeKey).then(res => {
-        try {
-          if (!res) {
-            resolve(SuccessMsg.emptyInstance())
-            return
-          }
-          res.forEach(item => utools.dbStorage.removeItem(item['_id']))
+        if (!res) {
           resolve(SuccessMsg.emptyInstance())
-        } catch (err) {
-          reject(err)
+          return
         }
+        res.forEach(item => utools.dbStorage.removeItem(item['_id']))
+        resolve(SuccessMsg.emptyInstance())
       }).catch(err => reject(err))
     })
   }

@@ -24,7 +24,9 @@ import {
   mdiArchiveCheckOutline,
   mdiMenuDown,
   mdiCropSquare,
-  mdiChartBoxOutline
+  mdiChartBoxOutline,
+  mdiChevronLeft,
+  mdiChevronRight
 } from '@mdi/js'
 import Vuetify from 'vuetify/lib/framework'
 
@@ -55,6 +57,8 @@ export default new Vuetify({
       'mdi-file-image': mdiFileImage,
       'mdi-close-box-multiple': mdiArchiveCheckOutline,
       'mdi-chart-box-outline': mdiChartBoxOutline,
+      'mdi-chevron-left': mdiChevronLeft,
+      'mdi-chevron-right': mdiChevronRight,
       checkboxOn: mdiCheckboxMarked,
       checkboxOff: mdiCheckboxBlankOutline,
       file: mdiPaperclip,

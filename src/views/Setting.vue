@@ -21,22 +21,7 @@
       </v-btn>
     </v-toolbar>
 
-    <v-btn
-      class="mx-2"
-      fab
-      dark
-      large
-      fixed
-      right
-      bottom
-      color="primary"
-      @click="toTop"
-      title="返回顶部"
-    >
-      <MyIcon dark>
-        mdi-arrow-up
-      </MyIcon>
-    </v-btn>
+    <ToTop></ToTop>
 
     <Dialog
       title="是否重置设置？"
@@ -383,10 +368,11 @@ import statistics from '@/store/statistics'
 import {arrayBufferToBase64ImagePNG} from '@/util/requests'
 import {mapState} from 'vuex'
 import MyIcon from '@/components/MyIcon'
+import ToTop from '@/components/ToTop'
 
 export default {
   name: 'Setting',
-  components: {Dialog, MyIcon},
+  components: {ToTop, Dialog, MyIcon},
   data() {
     return {
       quoteSourceSelectedItem: '',
