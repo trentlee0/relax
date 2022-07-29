@@ -19,6 +19,8 @@ export default new Vuex.Store({
   },
   mutations: {
     UPDATE_BACKGROUND(state, [type, val]) {
+      if (state.background.type === type) return
+      settings.clearTempCache()
       state.background.type = type
       // 仅仅用户自定义图片/网络图片/颜色背景才需要保存
       if (val) {

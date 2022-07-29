@@ -17,7 +17,7 @@
       </v-row>
     </v-card-title>
     <v-card-text>
-      <v-chart :theme="chartTheme" autoresize :option="option" style="height: 350px"></v-chart>
+      <v-chart :theme="chartTheme" autoresize :option="option" style="height: 295px"></v-chart>
     </v-card-text>
   </v-card>
 </template>

@@ -151,6 +151,7 @@ export default {
   mounted() {
     this.refreshData()
     this.resizeHandler()
+    this.registerEventHandler()
   },
   methods: {
     refreshData() {
