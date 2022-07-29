@@ -1,6 +1,6 @@
 # relax
 
-休息一下 - 休息提醒 uTools 插件 & Web App
+休息一下，专注、休息提醒 uTools 插件 & Web App
 
 ## 特性
 
@@ -9,35 +9,26 @@
 3. 待办清单
 4. 自定义背景
 5. 专注休息时间线
+6. 专注统计
 
 ## 安装
 
-在 [Releases](https://github.com/trentlee0/relax/releases) 页面下载
+1. 在 uTools 插件应用市场搜索‘休息一下‘安装
+
+2. 在 [Releases](https://github.com/trentlee0/relax/releases) 页面下载
 
 ## 构建
 
 ```shell
+# 安装依赖
 npm run install
+
+# 运行项目
+npm run serve
+
+# 构建项目
 npm run build
 ```
-
-## 使用的 API 接口
-
-引言：
-- 一言：https://v1.hitokoto.cn
-- 今日诗词：https://www.jinrishici.com
-- 扇贝：https://apiv3.shanbay.com/weapps/dailyquote/quote
-- 有道：https://dict.youdao.com/infoline?apiversion=5.0&mode=publish&update=auto&date={today}
-- 金山词霸：http://sentence.iciba.com/index.php?c=dailysentence&m=getdetail&title={today}
-- ONE一句：https://api.xygeng.cn/one
-
-图片：
-- Unsplash：https://source.unsplash.com
-- 必应：
-  - https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1
-  - https://api.xygeng.cn/Bing/
-- 扇贝：https://apiv3.shanbay.com/weapps/dailyquote/quote
-- 小歪高清壁纸：https://api.ixiaowai.cn/gqapi/gqapi.php
 
 ## 使用的开源库
 
@@ -51,6 +42,7 @@ npm run build
 - [timer.js](https://github.com/husa/timer.js)
 - [Voca](https://github.com/panzerdp/voca)
 - [vue](https://github.com/vuejs/vue)
+- [vue-echarts](https://github.com/ecomfe/vue-echarts)
 - [vuetify](https://github.com/vuetifyjs/vuetify)
 
 ## 白噪音来源
