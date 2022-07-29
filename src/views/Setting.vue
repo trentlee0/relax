@@ -42,6 +42,7 @@
     <v-snackbar
       v-model="successSnackbar"
       :value="true"
+      :timeout="2000"
       color="success"
     >
       <MyIcon>mdi-check-circle-outline</MyIcon>
@@ -49,8 +50,17 @@
     </v-snackbar>
 
     <v-snackbar
+      v-model="infoSnackbar"
+      :value="true"
+      :timeout="2000"
+    >
+      <strong class="pl-2"> {{ infoSnackbarMsg }}</strong>
+    </v-snackbar>
+
+    <v-snackbar
       v-model="errorSnackbar"
       :value="true"
+      :timeout="5000"
       color="error"
     >
       <strong class="pl-2"> {{ errorSnackbarMsg }}</strong>
@@ -261,16 +271,18 @@
         subheader
         three-line
       >
-        <v-subheader class="font-weight-bold">导入</v-subheader>
-        <small class="ml-5 text-caption">* 会覆盖原数据</small>
+        <v-subheader class="font-weight-bold">数据</v-subheader>
         <v-list-item>
           <v-list-item-content>
+            <v-subheader class="pl-0">导入</v-subheader>
+            <small class="ml-5 text-caption">* 会覆盖原数据</small>
             <v-row>
               <v-col cols="6">
                 <v-file-input
                   accept=".json"
                   outlined
                   dense
+                  v-model="settingFile"
                   @change="importSettingFile = $event"
                   label="选择导入设置文件"
                 ></v-file-input>
@@ -292,6 +304,7 @@
                   accept=".json"
                   outlined
                   dense
+                  v-model="statisticFile"
                   @change="importStatisticFile = $event"
                   label="选择导入统计文件"
                 ></v-file-input>
@@ -304,49 +317,46 @@
             </v-row>
           </v-list-item-content>
         </v-list-item>
-      </v-list>
-
-
-      <v-divider></v-divider>
-
-      <v-list
-        flat
-        subheader
-        three-line
-      >
-        <v-subheader class="font-weight-bold">导出</v-subheader>
 
         <v-list-item>
-          <v-list-item-content class="ml-2 mr-2">
-            <v-btn color="primary" large @click="exportSetting">
-              导出设置数据
-            </v-btn>
+          <v-list-item-content>
+            <v-subheader class="pl-0">导出</v-subheader>
+            <v-row class="pl-2 pr-2">
+              <v-col>
+                <v-btn block large color="primary" @click="exportSetting">
+                  导出设置数据
+                </v-btn>
+              </v-col>
+            </v-row>
 
-            <v-btn class="mt-5" color="primary" large @click="exportStatistic">
-              导出统计数据
-            </v-btn>
+            <v-row class="pl-2 pr-2">
+              <v-col>
+                <v-btn block large color="primary" @click="exportStatistic">
+                  导出统计数据
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-list-item-content>
         </v-list-item>
-      </v-list>
-
-      <v-divider></v-divider>
-
-      <v-list
-        flat
-        subheader
-        three-line
-      >
-        <v-subheader class="font-weight-bold">删除</v-subheader>
 
         <v-list-item>
-          <v-list-item-content class="ml-2 mr-2">
-            <v-btn large color="error" @click="deleteSetting">
-              重置设置
-            </v-btn>
+          <v-list-item-content>
+            <v-subheader class="pl-0">删除</v-subheader>
+            <v-row class="pl-2 pr-2">
+              <v-col>
+                <v-btn block large color="error" @click="deleteSetting">
+                  重置设置
+                </v-btn>
+              </v-col>
+            </v-row>
 
-            <v-btn class="mt-5" large color="error" @click="deleteStatistic">
-              删除统计数据
-            </v-btn>
+            <v-row class="pl-2 pr-2">
+              <v-col>
+                <v-btn block large color="error" @click="deleteStatistic">
+                  删除统计数据
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -385,6 +395,8 @@ export default {
       successSnackbarMsg: '',
       errorSnackbar: false,
       errorSnackbarMsg: '',
+      infoSnackbar: false,
+      infoSnackbarMsg: '',
       deleteSettingDialog: false,
       deleteStatisticDialog: false,
       fileMaxSize: 2_000_000,
@@ -396,7 +408,9 @@ export default {
       importStatisticFile: null,
       workingTime: 0,
       restingTime: 0,
-      automaticTiming: {}
+      automaticTiming: {},
+      settingFile: null,
+      statisticFile: null
     }
   },
   computed: {
@@ -476,6 +490,9 @@ export default {
         this.$store.commit('UPDATE_QUOTE', [selectedQuoteType, this.customQuote])
 
         const selectedBackgroundType = this.getKeyByValue(backgroundChinese, this.backgroundSelectedItem)
+        if (this.background.type !== selectedBackgroundType) {
+          this.showInfoSnackBar('请重新进入使背景生效')
+        }
         switch (selectedBackgroundType) {
           case backgroundType.COLOR:
             this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.bgColor])
@@ -510,6 +527,10 @@ export default {
     showErrorSnackBar(msg) {
       this.errorSnackbar = true
       this.errorSnackbarMsg = msg
+    },
+    showInfoSnackBar(msg) {
+      this.infoSnackbar = true
+      this.infoSnackbarMsg = msg
     },
     deleteSettingDialogOk() {
       this.$store.commit('RESET')
@@ -576,6 +597,7 @@ export default {
       }).catch(err => {
         this.showErrorSnackBar('导入失败，原因：' + err.message)
       })
+      this.settingFile = null
     },
     exportStatistic() {
       statistics.exportStatisticToJSON()
@@ -591,6 +613,7 @@ export default {
       statistics.importJSONToStatistic(file)
         .then(() => this.showSuccessSnackBar('导入成功'))
         .catch(err => this.showErrorSnackBar('导入失败，原因：' + err.message))
+      this.statisticFile = null
     }
   }
 }
