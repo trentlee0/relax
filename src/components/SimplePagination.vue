@@ -14,7 +14,7 @@
 import MyIcon from '@/components/MyIcon'
 
 export default {
-  name: 'DatePagination',
+  name: 'SimplePagination',
   components: {MyIcon},
   props: {
     text: {

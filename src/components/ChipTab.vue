@@ -1,5 +1,5 @@
 <template>
-  <v-row class="my-3 justify-center">
+  <v-row class="my-0 justify-center">
     <v-col cols="3">
     </v-col>
     <v-col cols="16" align="center">
@@ -13,7 +13,7 @@
         {{ item }}
       </v-chip>
     </v-col>
-    <v-col cols="3" align="center">
+    <v-col cols="3">
       <slot name="right"></slot>
     </v-col>
   </v-row>

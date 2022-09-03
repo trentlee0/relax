@@ -25,7 +25,7 @@
               <span>{{ greeting }}&nbsp;&nbsp;</span>
             </div>
             <div class="text-caption mt-1 text-right mr-1" style="clear: both;">
-              今日: 专注 {{ todayWorkTimeFormat }}, 休息 {{ todayRestTimeFormat }}
+              今天 专注 {{ todayWorkTimeFormat }}, 休息 {{ todayRestTimeFormat }}
             </div>
           </div>
         </v-col>
@@ -99,15 +99,16 @@
           color="error"
           icon
           fab
+          small
           title="清空已完成任务"
           @click="dialog = true"
         >
-          <MyIcon>mdi-close-box-multiple</MyIcon>
+          <MyIcon dense>mdi-close-box-multiple</MyIcon>
         </v-btn>
       </v-row>
     </v-container>
 
-    <div class="pr-3 pl-3 input-float">
+    <div class="pr-5 pl-5 input-float">
       <v-sheet
         class="sheet"
         elevation="10"
@@ -119,16 +120,18 @@
           flat
           maxlength="30"
           @keydown.enter="createTask"
+          @keydown.esc="$event.target.blur()"
         >
           <template v-slot:append>
             <v-fade-transition>
-              <MyIcon
-                v-show="newTaskTitle"
-                color="primary"
-                @click="createTask"
-              >
-                mdi-plus-circle
-              </MyIcon>
+              <div @click="createTask" style="cursor: pointer;">
+                <MyIcon
+                  v-show="newTaskTitle"
+                  color="primary"
+                >
+                  mdi-plus-circle
+                </MyIcon>
+              </div>
             </v-fade-transition>
           </template>
         </v-text-field>
@@ -147,11 +150,11 @@
 
 <script>
 import TodoList from '@/views/home/todo/TodoList'
-import todos from '@/store/todos'
+import todos from '@/api/todos'
 import Dialog from '@/components/Dialog'
 import MyIcon from '@/components/MyIcon'
-import {isUTools} from '@/util/platforms'
-import statistics from '@/store/statistics'
+import {isUTools} from '@/util/common'
+import statistics from '@/api/statistics'
 
 export default {
   name: 'TodoPanel',
@@ -220,13 +223,13 @@ export default {
     dropTodoItem({fromIndex, toIndex}) {
       const target = this.tasks[fromIndex]
       const doneTasks = this.doneTasks
-      const todoTasks =this.todoTasks
+      const todoTasks = this.todoTasks
       todoTasks.splice(fromIndex, 1)
       todoTasks.splice(toIndex, 0, target)
       this.tasks = todoTasks.concat(doneTasks)
     },
     initState() {
-      todos.getAll().then(res => this.tasks = res.data || [])
+      todos.list().then(res => this.tasks = res.data || [])
 
       if (isUTools()) {
         const user = utools.getUser()
@@ -279,45 +282,25 @@ export default {
       }
     },
     startTask({taskId}) {
-      for (let i = 0; i < this.tasks.length; i++) {
-        if (this.tasks[i].id === taskId) {
-          this.$bus.$emit('startTaskTimer', this.tasks[i])
-          break
-        }
-      }
+      const task = this.tasks.find(task => task.id === taskId)
+      if (task) this.$bus.$emit('startTaskTimer', task)
     },
     checkedTask({taskId, done}) {
-      for (let i = 0; i < this.tasks.length; i++) {
-        if (this.tasks[i].id === taskId) {
-          this.tasks[i].done = done
-          break
-        }
-      }
+      const task = this.tasks.find(task => task.id === taskId)
+      if (task) task.done = done
     },
     createTask() {
       if (!this.newTaskTitle || !this.newTaskTitle.trim()) return
-      this.tasks.unshift({
-        id: Date.now(),
-        done: false,
-        title: this.newTaskTitle
-      })
+      this.tasks.unshift({id: Date.now(), done: false, title: this.newTaskTitle})
       this.newTaskTitle = null
     },
     removeTask({taskId}) {
-      for (let i = 0; i < this.tasks.length; i++) {
-        if (this.tasks[i].id === taskId) {
-          this.tasks.splice(i, 1)
-          break
-        }
-      }
+      const i = this.tasks.findIndex(task => task.id === taskId)
+      if (i !== -1) this.tasks.splice(i, 1)
     },
     updateTask({taskId, taskTitle}) {
-      for (let i = 0; i < this.tasks.length; i++) {
-        if (this.tasks[i].id === taskId) {
-          this.tasks[i].title = taskTitle
-          break
-        }
-      }
+      const task = this.tasks.find(task => task.id === taskId)
+      if (task) task.title = taskTitle
     },
     deleteFinishedTasks() {
       this.tasks = this.todoTasks
@@ -328,7 +311,7 @@ export default {
     tasks: {
       deep: true,
       handler(value) {
-        todos.saveAll(value)
+        todos.cover(value)
       }
     }
   }
@@ -339,12 +322,12 @@ export default {
 .input-float
   width: 100%
   position: fixed
-  bottom: 20px
+  bottom: 25px
   right: 0
   z-index: 10
 
   .sheet
     width: 100%
-    height: 50px
+    height: 40px
     border-radius: 5px
 </style>

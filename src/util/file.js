@@ -1,39 +1,31 @@
 import FileSaver from 'file-saver'
-import {SuccessMsg} from '@/store/storage'
+import {Msg} from '@/util/storage'
 
 /**
  * 导出为 JSON 字符串
  * @param {Object} data 数据源
  * @param {string} filename 导出的文件名
- * @return {Promise<SuccessMsg>}
+ * @return {Promise<Msg>}
  */
 export function exportJSON(data, filename) {
   return new Promise((resolve, reject) => {
-    try {
-      let dataStr = JSON.stringify(data, null, 2)
-      let blob = new Blob([dataStr], {type: 'application/json'})
-      FileSaver.saveAs(blob, filename)
-      resolve(SuccessMsg.emptyInstance())
-    } catch (err) {
-      reject(err)
-    }
+    let dataStr = JSON.stringify(data, null, 2)
+    let blob = new Blob([dataStr], {type: 'application/json'})
+    FileSaver.saveAs(blob, filename)
+    resolve(Msg.instance())
   })
 }
 
 /**
  * 导入 JSON 数据为 JS 对象
  * @param {File} file
- * @return {Promise<SuccessMsg>}
+ * @return {Promise<Msg>}
  */
 export function importJSON(file) {
   return new Promise((resolve, reject) => {
-    try {
-      const reader = new FileReader()
-      reader.readAsText(file)
-      reader.onload = () => resolve(SuccessMsg.instance(JSON.parse(reader.result)))
-    } catch (err) {
-      reject(err)
-    }
+    const reader = new FileReader()
+    reader.readAsText(file)
+    reader.onload = () => resolve(Msg.instance(JSON.parse(reader.result)))
   })
 }
 

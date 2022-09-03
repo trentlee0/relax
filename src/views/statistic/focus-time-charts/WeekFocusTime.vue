@@ -1,11 +1,16 @@
 <template>
-  <v-chart :theme="chartTheme" autoresize :option="option" style="height: 400px"></v-chart>
+  <div>
+    <v-chart :theme="chartTheme" autoresize :option="option" style="height: 360px"></v-chart>
+    <div class="text--primary font-weight-light text-center">
+      {{ pagination.text }} 专注了 {{ workTimesSum }} 分钟
+    </div>
+  </div>
 </template>
 
 <script>
 import dayjs from 'dayjs'
-import statistics from '@/store/statistics'
-import * as strings from '@/util/strings'
+import statistics from '@/api/statistics'
+import * as string from '@/util/string'
 
 export default {
   name: 'WeekFocusTime',
@@ -22,9 +27,9 @@ export default {
       },
       pagination: {
         text: '',
-        pageDate: {}
+        weekOffset: 0
       },
-      offset: 0
+      workTimesSum: 0
     }
   },
   computed: {
@@ -34,7 +39,7 @@ export default {
   },
   methods: {
     refreshData() {
-      statistics.getItemsByWeek(this.offset).then(res => {
+      statistics.getItemsByWeek(this.pagination.weekOffset).then(res => {
         this.option.xAxis = {
           name: '星期',
           data: res.data.details
@@ -51,6 +56,7 @@ export default {
           type: 'bar',
           data: res.data.timeRange
         }]
+        this.workTimesSum = res.data.sum
       })
     },
     prev() {
@@ -60,10 +66,10 @@ export default {
       return this.dateChange(1)
     },
     dateChange(offset) {
-      if (this.offset === 0 && offset > 0) return this.pagination.text
+      if (this.pagination.weekOffset === 0 && offset > 0) return this.pagination.text
 
-      this.offset += offset
-      switch (this.offset) {
+      this.pagination.weekOffset += offset
+      switch (this.pagination.weekOffset) {
         case 0:
           this.pagination.text = '本周'
           break
@@ -71,9 +77,9 @@ export default {
           this.pagination.text = '上周'
           break
         default:
-          const monday = dayjs().startOf('week').add(1, 'd').add(this.offset, 'week')
+          const monday = dayjs().startOf('week').add(1, 'd').add(this.pagination.weekOffset, 'week')
           const sunday = monday.add(6, 'd')
-          this.pagination.text = strings.format('%s-%s', monday.format('MM月DD日'), sunday.format('MM月DD日'))
+          this.pagination.text = string.format('%s-%s', monday.format('MM月DD日'), sunday.format('MM月DD日'))
       }
       this.refreshData()
       return this.pagination.text

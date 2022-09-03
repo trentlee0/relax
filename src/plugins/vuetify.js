@@ -26,7 +26,11 @@ import {
   mdiCropSquare,
   mdiChartBoxOutline,
   mdiChevronLeft,
-  mdiChevronRight
+  mdiChevronRight,
+  mdiCalendar,
+  mdiHomeOutline,
+  mdiRadioboxBlank,
+  mdiRadioboxMarked
 } from '@mdi/js'
 import Vuetify from 'vuetify/lib/framework'
 
@@ -49,7 +53,7 @@ export default new Vuetify({
       'mdi-rotate-3d-variant': mdiRotate3dVariant,
       'mdi-pause-circle': mdiPauseCircle,
       'mdi-arrow-right-drop-circle': mdiArrowRightDropCircle,
-      'crop-square': mdiCropSquare,
+      'mdi-crop-square': mdiCropSquare,
       'mdi-arrow-left': mdiArrowLeft,
       'mdi-content-save-outline': mdiContentSaveOutline,
       'mdi-arrow-up': mdiArrowUp,
@@ -59,11 +63,17 @@ export default new Vuetify({
       'mdi-chart-box-outline': mdiChartBoxOutline,
       'mdi-chevron-left': mdiChevronLeft,
       'mdi-chevron-right': mdiChevronRight,
+      'mdi-calendar': mdiCalendar,
+      'mdi-home-outline': mdiHomeOutline,
       checkboxOn: mdiCheckboxMarked,
       checkboxOff: mdiCheckboxBlankOutline,
       file: mdiPaperclip,
       expand: mdiChevronDown,
-      dropdown: mdiMenuDown
+      dropdown: mdiMenuDown,
+      prev: mdiChevronLeft,
+      next: mdiChevronRight,
+      radioOff: mdiRadioboxBlank,
+      radioOn: mdiRadioboxMarked
     }
   }
 })

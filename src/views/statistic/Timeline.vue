@@ -4,7 +4,8 @@
       v-if="isEmpty"
       flat
       class="ma-auto"
-      max-width="600">
+      max-width="600"
+    >
       <div class="text-center pa-15">暂无数据</div>
     </v-card>
     <v-card
@@ -84,9 +85,14 @@
           <v-timeline-item
             class="mb-6"
           >
-
-            <div><strong>{{ key }}</strong></div>
-            <div>专注 {{ formatMinute(value.workSum) }}，休息 {{ formatMinute(value.restSum) }}</div>
+            <div>
+              <span class="font-weight-bold">{{ key }}</span>
+            </div>
+            <div>
+              <span class="text--secondary">
+                专注 {{ formatMinute(value.workSum) }}，休息 {{ formatMinute(value.restSum) }}
+              </span>
+            </div>
           </v-timeline-item>
 
           <v-timeline-item
@@ -98,7 +104,7 @@
             <v-row class="pt-1">
               <v-col cols="6">
                 {{ formatTime(item.startTime) }} -
-                {{ formatTimeAddMinute(item.startTime, item.duration) }}
+                {{ item.endTime ? formatTime(item.endTime) : formatTimeAddMinute(item.startTime, item.duration) }}
               </v-col>
               <v-col cols="5" class="text-right">
                 <strong>{{ item.name }}</strong>&nbsp;
@@ -119,11 +125,11 @@
 </template>
 
 <script>
-import statistics from '@/store/statistics'
+import statistics from '@/api/statistics'
 import dayjs from 'dayjs'
 import MyIcon from '@/components/MyIcon'
-import {formatMinute} from '@/util/durations'
-import {clockStatus} from '@/config/constants'
+import {formatDurationMinutes} from '@/util/date'
+import {ClockStatus} from '@/common/constant'
 
 export default {
   name: 'Timeline',
@@ -156,19 +162,19 @@ export default {
   methods: {
     refreshData() {
       console.log('timeline refresh')
-      statistics.getEveryday().then(res => {
-        const data = res.data
-        if (!data || !data.allDayGroups) this.isEmpty = true
-
-        this.dayGroups = data.allDayGroups
+      statistics.getDailyItems('YYYY年MM月DD日').then(({data}) => {
+        this.isEmpty = data.isEmpty
+        this.dayGroups = data.data
         this.isCompleted = true
       })
     },
     registerEventHandler() {
+      console.log('register event handler: scroll, resize')
       window.addEventListener('scroll', this.scrollHandler)
       window.addEventListener('resize', this.resizeHandler)
     },
     unregisterEventHandler() {
+      console.log('unregister event handler: scroll, resize')
       window.removeEventListener('scroll', this.scrollHandler)
       window.removeEventListener('resize', this.resizeHandler)
     },
@@ -194,10 +200,10 @@ export default {
       return dayjs(timestamp).add(duration, 'm').format('HH:mm')
     },
     formatMinute(minute) {
-      return formatMinute(minute)
+      return formatDurationMinutes(minute)
     },
     isWork(status) {
-      return status === clockStatus.WORK
+      return status === ClockStatus.WORK
     }
   }
 }

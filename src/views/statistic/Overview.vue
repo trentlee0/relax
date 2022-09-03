@@ -5,28 +5,28 @@
         <TrendOverview ref="trend"></TrendOverview>
       </v-col>
       <v-col cols="12" md="6">
-        <CategoryOverview ref="category"></CategoryOverview>
+        <HeatmapOverview ref="heatmap" :is-dark="$vuetify.theme.dark"></HeatmapOverview>
       </v-col>
     </v-row>
   </v-card>
 </template>
 
 <script>
-import CategoryOverview from '@/views/statistic/overview/CategoryOverview'
-import TrendOverview from '@/views/statistic/overview/TrendOverview'
+import HeatmapOverview from '@/views/statistic/overview-charts/HeatmapOverview'
+import TrendOverview from '@/views/statistic/overview-charts/TrendOverview'
 
 export default {
   name: 'Overview',
-  components: {TrendOverview, CategoryOverview},
+  components: {TrendOverview, HeatmapOverview},
   mounted() {
     this.refreshData()
   },
   methods: {
     refreshData() {
-      console.log('overview refresh')
+      console.log('overview-charts refresh')
       this.$nextTick(() => {
         this.$refs.trend.refreshData()
-        this.$refs.category.refreshData()
+        this.$refs.heatmap.refreshData()
       })
     }
   }

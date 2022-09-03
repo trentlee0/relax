@@ -5,26 +5,29 @@
       max-width="340"
       @click:outside="no"
       @keydown.esc.stop="no"
+      :persistent="!cancelable"
     >
       <v-card>
         <v-card-title class="text-h6">
           {{ title }}
         </v-card-title>
+        <slot></slot>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
             text
             @click="no"
+            v-if="cancelable"
           >
-            否
+            {{ cancelText }}
           </v-btn>
           <v-btn
             color="primary"
             text
             @click="yes"
           >
-            是
+            {{ confirmText }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -43,6 +46,18 @@ export default {
     show: {
       type: Boolean,
       default: false
+    },
+    cancelable: {
+      type: Boolean,
+      default: true
+    },
+    cancelText: {
+      type: String,
+      default: '否'
+    },
+    confirmText: {
+      type: String,
+      default: '是'
     }
   },
   methods: {

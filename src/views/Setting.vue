@@ -3,9 +3,10 @@
     <v-toolbar flat>
       <v-btn
         icon
-        @click="back"
+        @click="$router.replace('/')"
+        :title="`主页 (${shortcuts.global.HOME})`"
       >
-        <MyIcon>mdi-arrow-left</MyIcon>
+        <MyIcon>mdi-home-outline</MyIcon>
       </v-btn>
 
       <v-toolbar-title>设置</v-toolbar-title>
@@ -16,6 +17,7 @@
         icon
         title="保存"
         @click="save"
+        :title="`保存设置 (${shortcuts.setting.SAVE})`"
       >
         <MyIcon>mdi-content-save-outline</MyIcon>
       </v-btn>
@@ -74,21 +76,22 @@
         <v-subheader class="font-weight-bold">时间</v-subheader>
 
         <v-list-item>
-          <v-list-item-title style="height: 95px">
+          <v-list-item-content>
             <v-subheader class="pl-0">
               专注时长：{{ workingTime }} 分
             </v-subheader>
-            <v-slider
-              v-model="workingTime"
-              min="1"
-              max="120"
-              thumb-label
-            ></v-slider>
-          </v-list-item-title>
-        </v-list-item>
+            <div>
+              <v-slider
+                v-model="workingTime"
+                min="1"
+                max="120"
+                :thumb-size="24"
+                dense
+                persistent-hint
+                thumb-label
+              ></v-slider>
+            </div>
 
-        <v-list-item>
-          <v-list-item-title style="height: 95px">
             <v-subheader class="pl-0">
               休息时长：{{ restingTime }} 分
             </v-subheader>
@@ -96,27 +99,31 @@
               v-model="restingTime"
               min="1"
               max="30"
+              :thumb-size="24"
+              dense
               thumb-label
             ></v-slider>
-          </v-list-item-title>
+          </v-list-item-content>
         </v-list-item>
 
         <v-list-item>
-          <v-switch
+          <v-checkbox
             v-model="automaticTiming.working"
             label="自动专注计时"
-          ></v-switch>
+            dense
+          ></v-checkbox>
         </v-list-item>
 
         <v-list-item>
-          <v-switch
+          <v-checkbox
+            dense
             v-model="automaticTiming.resting"
             label="自动休息计时"
-          ></v-switch>
+          ></v-checkbox>
         </v-list-item>
       </v-list>
 
-      <v-divider color=""></v-divider>
+      <v-divider></v-divider>
 
       <v-list
         flat
@@ -126,30 +133,34 @@
         <v-subheader class="font-weight-bold">提醒</v-subheader>
 
         <v-list-item>
-          <v-switch
+          <v-checkbox
+            dense
             v-model="notification.whenEndOfWorkingTime"
             label="专注结束发送通知"
-          ></v-switch>
+          ></v-checkbox>
         </v-list-item>
 
         <v-list-item v-if="isUTools">
-          <v-switch
+          <v-checkbox
+            dense
             v-model="notification.showWindowWhenEndOfWorkingTime"
             label="专注结束显示主窗口"
-          ></v-switch>
+          ></v-checkbox>
         </v-list-item>
 
         <v-list-item>
-          <v-switch
+          <v-checkbox
+            dense
             v-model="notification.beforeEndOfWorkingTime"
             label="专注结束前 15 秒发送通知"
-          ></v-switch>
+          ></v-checkbox>
         </v-list-item>
         <v-list-item>
-          <v-switch
+          <v-checkbox
+            dense
             v-model="notification.whenEndOfRestingTime"
             label="休息结束发送通知"
-          ></v-switch>
+          ></v-checkbox>
         </v-list-item>
       </v-list>
 
@@ -165,101 +176,95 @@
         <v-list-item>
           <v-list-item-content>
             <v-subheader class="pl-0">引言来源</v-subheader>
-            <v-col cols="12">
-              <v-select
-                v-model="quoteSourceSelectedItem"
-                :items="quoteSourceItems"
-                menu-props="auto"
-                solo
-              ></v-select>
-            </v-col>
-            <v-col cols="12" v-if="isCustomQuote">
-              <v-text-field
-                label="请输入引言"
-                autofocus
-                v-model="customQuote"
-                solo
-              ></v-text-field>
-            </v-col>
-          </v-list-item-content>
-        </v-list-item>
+            <v-select
+              v-model="quoteSourceSelectedItem"
+              :items="quoteSourceItems"
+              menu-props="auto"
+              dense
+              label="Hello"
+              solo
+            >
+            </v-select>
 
-        <v-list-item>
-          <v-list-item-content>
+            <v-text-field
+              v-if="isCustomQuote"
+              label="请输入引言"
+              autofocus
+              dense
+              v-model="customQuote"
+              solo
+            ></v-text-field>
+
             <v-subheader class="pl-0">背景来源</v-subheader>
+            <v-select
+              v-model="backgroundSelectedItem"
+              :items="backgroundTypeItems"
+              menu-props="auto"
+              dense
+              solo
+            ></v-select>
 
-            <v-col cols="12">
-              <v-select
-                v-model="backgroundSelectedItem"
-                :items="backgroundTypeItems"
+
+            <div v-if="isColor" class="d-flex justify-center">
+              <v-col>
+                <v-card :style="{'background-color': bgColor}">
+                  <v-color-picker
+                    v-model="bgColor"
+                  >
+                  </v-color-picker>
+                </v-card>
+              </v-col>
+            </div>
+
+            <div v-else-if="isImage">
+              <div>
+                <v-form
+                  ref="form"
+                  v-model="imageSizeValid"
+                  lazy-validation
+                >
+                  <v-file-input
+                    :rules="rules"
+                    dense
+                    accept="image/png"
+                    :prepend-icon="$vuetify.icons.values['mdi-file-image']"
+                    label="选择背景图片"
+                    @click:clear="clearImageFile"
+                    @change="selectImageFile"
+                  ></v-file-input>
+                </v-form>
+              </div>
+              <v-card>
+                <v-img
+                  :src="bgImage"
+                  class="white--text align-end"
+                  :gradient="!bgImage || !bgImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
+                  height="250px"
+                >
+                </v-img>
+              </v-card>
+            </div>
+
+            <div v-else-if="isNetworkImage">
+              <v-text-field
+                v-model="networkImage"
+                label="图片地址"
                 menu-props="auto"
+                dense
                 solo
-              ></v-select>
-            </v-col>
+                @input="changeNetworkImage"
+              ></v-text-field>
+              <v-card>
+                <v-img
+                  :src="networkImage"
+                  class="white--text align-end"
+                  :gradient="!networkImage || !networkImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
+                  height="250px"
+                >
+                </v-img>
+              </v-card>
+            </div>
 
-            <v-list-item-subtitle>
-              <div v-if="isColor" class="d-flex justify-center">
-                <v-col>
-                  <v-card :style="{'background-color': bgColor}">
-                    <v-color-picker
-                      v-model="bgColor"
-                    >
-                    </v-color-picker>
-                  </v-card>
-                </v-col>
-              </div>
-
-              <div v-else-if="isImage">
-                <v-col>
-                  <div>
-                    <v-form
-                      ref="form"
-                      v-model="imageSizeValid"
-                      lazy-validation
-                    >
-                      <v-file-input
-                        :rules="rules"
-                        accept="image/png"
-                        :prepend-icon="$vuetify.icons.values['mdi-file-image']"
-                        label="选择背景图片"
-                        @click:clear="clearImageFile"
-                        @change="selectImageFile"
-                      ></v-file-input>
-                    </v-form>
-                  </div>
-                  <v-card>
-                    <v-img
-                      :src="bgImage"
-                      class="white--text align-end"
-                      :gradient="!bgImage || !bgImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
-                      height="250px"
-                    >
-                    </v-img>
-                  </v-card>
-                </v-col>
-              </div>
-
-              <div v-else-if="isNetworkImage">
-                <v-col>
-                  <v-text-field
-                    v-model="networkImage"
-                    label="图片地址"
-                    menu-props="auto"
-                    solo
-                    @input="changeNetworkImage"
-                  ></v-text-field>
-                  <v-card>
-                    <v-img
-                      :src="networkImage"
-                      class="white--text align-end"
-                      :gradient="!networkImage || !networkImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
-                      height="250px"
-                    >
-                    </v-img>
-                  </v-card>
-                </v-col>
-              </div>
-            </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -367,18 +372,21 @@
 <script>
 import {
   backgroundChinese,
-  backgroundType,
-  quoteType,
+  BackgroundType,
+  QuoteType,
   quoteChinese, crossDomainBackground, crossDomainQuote
-} from '@/config/constants'
-import {isUTools} from '@/util/platforms'
+} from '@/common/constant'
+import {isUTools} from '@/util/common'
 import Dialog from '@/components/Dialog'
-import settings from '@/store/settings'
-import statistics from '@/store/statistics'
-import {arrayBufferToBase64ImagePNG} from '@/util/requests'
+import settings from '@/api/settings'
+import statistics from '@/api/statistics'
+import {arrayBufferToBase64ImagePNG} from '@/util/request'
 import {mapState} from 'vuex'
 import MyIcon from '@/components/MyIcon'
 import ToTop from '@/components/ToTop'
+import dayjs from 'dayjs'
+import hotkeys from 'hotkeys-js'
+import shortcuts from '@/common/shortcuts'
 
 export default {
   name: 'Setting',
@@ -410,27 +418,43 @@ export default {
       restingTime: 0,
       automaticTiming: {},
       settingFile: null,
-      statisticFile: null
+      statisticFile: null,
+      shortcuts: shortcuts
     }
+  },
+  created() {
+    hotkeys(Object.values(shortcuts.setting).join(','), 'setting', (event, handler) => {
+      event.preventDefault()
+      switch (handler.key) {
+        case shortcuts.setting.SAVE:
+          this.save()
+          break
+      }
+    })
+  },
+  activated() {
+    hotkeys.setScope('setting')
+
+    this.initPage()
   },
   computed: {
     ...mapState({
-      background: state => state.background,
-      quote: state => state.quote,
-      workingTimeFromStore: state => state.workingTime / 60,
-      restingTimeFromStore: state => state.restingTime / 60,
-      notification: state => state.notification,
-      automaticTimingFromStore: state => state.automaticTiming
+      background: state => state.settings.background,
+      quote: state => state.settings.quote,
+      workingTimeFromStore: state => state.settings.workingTime / 60,
+      restingTimeFromStore: state => state.settings.restingTime / 60,
+      notification: state => state.settings.notification,
+      automaticTimingFromStore: state => state.settings.automaticTiming
     }),
     quoteSourceItems() {
       return Object
-        .values(quoteType)
+        .values(QuoteType)
         .filter(value => isUTools() ? true : crossDomainQuote.indexOf(value) === -1)
         .map(value => quoteChinese[value])
     },
     backgroundTypeItems() {
       return Object
-        .values(backgroundType)
+        .values(BackgroundType)
         .filter(value => isUTools() ? true : crossDomainBackground.indexOf(value) === -1)
         .map(value => backgroundChinese[value])
     },
@@ -450,9 +474,6 @@ export default {
       return isUTools()
     }
   },
-  activated() {
-    this.initPage()
-  },
   methods: {
     initPage() {
       this.initState()
@@ -465,24 +486,21 @@ export default {
       this.quoteSourceSelectedItem = quoteChinese[this.quote.type]
       this.automaticTiming = {...this.automaticTimingFromStore}
 
-      if (this.$store.state.quote.val) this.customQuote = this.$store.state.quote.val
+      if (this.$store.state.settings.quote.val) this.customQuote = this.$store.state.settings.quote.val
 
       if (this.background.val) {
-        if (this.background.type === backgroundType.COLOR)
+        if (this.background.type === BackgroundType.COLOR)
           this.bgColor = this.background.val
-        else if (this.background.type === backgroundType.NETWORK)
+        else if (this.background.type === BackgroundType.NETWORK)
           this.networkImage = this.background.val
       }
 
       if (isUTools()) {
         this.bgImage = this.background.val
       } else {
-        settings.getTempCache(backgroundType.IMAGE)
+        settings.getTempCache(BackgroundType.IMAGE)
           .then(res => this.bgImage = res.data)
       }
-    },
-    back() {
-      this.$router.replace('/')
     },
     save() {
       try {
@@ -494,13 +512,13 @@ export default {
           this.showInfoSnackBar('请重新进入使背景生效')
         }
         switch (selectedBackgroundType) {
-          case backgroundType.COLOR:
+          case BackgroundType.COLOR:
             this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.bgColor])
             break
-          case backgroundType.IMAGE:
+          case BackgroundType.IMAGE:
             this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.bgImage])
             break
-          case backgroundType.NETWORK:
+          case BackgroundType.NETWORK:
             this.$store.commit('UPDATE_BACKGROUND', [selectedBackgroundType, this.networkImage])
             break
           default:
@@ -580,7 +598,7 @@ export default {
       this.bgImage = ' '
     },
     exportSetting() {
-      settings.exportSettingToJSON(this.$store.getters.getAll)
+      settings.exportSettingToJSON(this.$store.state.settings)
         .then(() => this.showSuccessSnackBar('导出成功'))
         .catch(err => this.showErrorSnackBar('导出失败，原因：' + err.message))
     },
@@ -600,7 +618,7 @@ export default {
       this.settingFile = null
     },
     exportStatistic() {
-      statistics.exportStatisticToJSON()
+      statistics.exportStatisticToJSON(`relax_statistics_${dayjs().format('YYYY-MM-DD')}.json`)
         .then(() => this.showSuccessSnackBar('导出成功'))
         .catch(err => this.showErrorSnackBar('导出失败，原因：' + err.message))
     },
@@ -610,10 +628,13 @@ export default {
         this.showErrorSnackBar('请选择文件')
         return
       }
-      statistics.importJSONToStatistic(file)
-        .then(() => this.showSuccessSnackBar('导入成功'))
-        .catch(err => this.showErrorSnackBar('导入失败，原因：' + err.message))
-      this.statisticFile = null
+      statistics.exportStatisticToJSON('relax_statistics_back.json').then(() => {
+        statistics.importJSONToStatistic(file)
+          .then(() => this.showSuccessSnackBar('导入成功'))
+          .catch(err => this.showErrorSnackBar('导入失败，原因：' + err.message))
+        this.statisticFile = null
+      })
+
     }
   }
 }

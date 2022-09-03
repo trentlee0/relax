@@ -25,23 +25,23 @@ export function rgbToHex(r, g, b) {
   }).join('')
 }
 
+/**
+ * @param src
+ * @return {Promise<string>}
+ */
 export function getSubjectHexColor(src) {
   return new Promise((resolve, reject) => {
-    try {
-      const colorThief = new ColorThief()
-      const imgElement = document.createElement('img')
-      imgElement.src = src
-      if (imgElement.complete) {
+    const colorThief = new ColorThief()
+    const imgElement = document.createElement('img')
+    imgElement.src = src
+    if (imgElement.complete) {
+      const rgb = colorThief.getColor(imgElement)
+      resolve(rgbToHex(rgb[0], rgb[1], rgb[2]))
+    } else {
+      imgElement.addEventListener('load', () => {
         const rgb = colorThief.getColor(imgElement)
         resolve(rgbToHex(rgb[0], rgb[1], rgb[2]))
-      } else {
-        imgElement.addEventListener('load', () => {
-          const rgb = colorThief.getColor(imgElement)
-          resolve(rgbToHex(rgb[0], rgb[1], rgb[2]))
-        })
-      }
-    } catch (err) {
-      reject(err)
+      })
     }
   })
 }

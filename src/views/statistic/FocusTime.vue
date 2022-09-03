@@ -33,6 +33,7 @@ import DayFocusTime from '@/views/statistic/focus-time-charts/DayFocusTime'
 import WeekFocusTime from '@/views/statistic/focus-time-charts/WeekFocusTime'
 import MonthFocusTime from '@/views/statistic/focus-time-charts/MonthFocusTime'
 import YearFocusTime from '@/views/statistic/focus-time-charts/YearFocusTime'
+import dayjs from 'dayjs'
 
 export default {
   name: 'FocusTime',
@@ -53,15 +54,19 @@ export default {
       this.$nextTick(() => {
         switch (this.activeChip) {
           case 0:
+            this.$refs.day.pagination = {text: '', pageDate: dayjs()}
             this.paginationText = this.$refs.day.dateChange(0)
             break
           case 1:
+            this.$refs.week.pagination = {text: '', weekOffset: 0}
             this.paginationText = this.$refs.week.dateChange(0)
             break
           case 2:
+            this.$refs.month.pagination = {text: '', pageDate: dayjs()}
             this.paginationText = this.$refs.month.dateChange(0)
             break
           case 3:
+            this.$refs.year.pagination = {text: '', pageDate: dayjs()}
             this.paginationText = this.$refs.year.dateChange(0)
             break
         }

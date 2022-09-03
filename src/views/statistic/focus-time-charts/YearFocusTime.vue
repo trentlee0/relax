@@ -1,10 +1,15 @@
 <template>
-  <v-chart :theme="chartTheme" autoresize :option="option" style="height: 400px"></v-chart>
+  <div>
+    <v-chart :theme="chartTheme" autoresize :option="option" style="height: 360px"></v-chart>
+    <div class="text--primary font-weight-light text-center">
+      {{ pagination.text }} 专注了 {{ workTimesSum }} 分钟
+    </div>
+  </div>
 </template>
 
 <script>
 import dayjs from 'dayjs'
-import statistics from '@/store/statistics'
+import statistics from '@/api/statistics'
 
 export default {
   name: 'YearFocusTime',
@@ -23,7 +28,7 @@ export default {
         text: '',
         pageDate: dayjs()
       },
-      offset: 0
+      workTimesSum: 0
     }
   },
   computed: {
@@ -51,6 +56,7 @@ export default {
           type: 'bar',
           data: res.data.timeRange
         }]
+        this.workTimesSum = res.data.sum
       })
     },
     prev() {

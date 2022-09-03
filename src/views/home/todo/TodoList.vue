@@ -30,7 +30,7 @@
       absolute
       offset-y
     >
-      <v-list>
+      <v-list dense>
         <v-hover>
           <v-list-item @click="handleMenuStartClick">
             <v-list-item-title>开始专注</v-list-item-title>

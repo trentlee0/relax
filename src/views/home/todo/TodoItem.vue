@@ -1,6 +1,7 @@
 <template>
   <div>
     <v-list-item
+      dense
       @contextmenu="handleContextmenu"
     >
       <v-checkbox
@@ -13,11 +14,20 @@
       </v-checkbox>
 
       <div
-        class="ml-4"
-        :class="{'text-decoration-line-through grey--text': task.done}"
-        v-text="task.title"
+        class="item-text-content"
         v-show="!editing"
-      ></div>
+      >
+        <div
+          class="ml-4"
+          :class="{'text-decoration-line-through grey--text': task.done}"
+          v-text="task.title"
+        ></div>
+        <div
+          class="grey--text"
+          style="font-size: small;"
+          v-text="formatDate(task.id)"
+        ></div>
+      </div>
 
       <div
         class="ml-4"
@@ -39,6 +49,8 @@
 </template>
 
 <script>
+import dayjs from 'dayjs'
+
 export default {
   name: 'TodoItem',
   props: ['task', 'editing'],
@@ -58,11 +70,18 @@ export default {
     },
     handleContextmenu(e) {
       this.$emit('contextmenu', {event: e, taskId: this.task.id})
+    },
+    formatDate(timestamp) {
+      return dayjs(timestamp).format('MM-DD')
     }
   }
 }
 </script>
 
-<style scoped>
-
+<style lang="sass" scoped>
+.item-text-content
+  width: 100%
+  display: flex
+  justify-content: space-between
+  align-items: center
 </style>

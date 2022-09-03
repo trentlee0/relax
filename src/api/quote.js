@@ -1,11 +1,11 @@
-import {get} from '@/util/requests'
-import {quoteType} from '@/config/constants'
+import {get} from '@/util/request'
+import {QuoteType} from '@/common/constant'
 import {load} from 'jinrishici'
 import store from '@/store'
 import dayjs from 'dayjs'
 
 const QUOTE_REQUESTS = {
-  [quoteType.SHANBAY]: () => {
+  [QuoteType.SHANBAY]: () => {
     return new Promise((resolve, reject) => {
       get('https://apiv3.shanbay.com/weapps/dailyquote/quote/')
         .then(res => resolve({
@@ -16,7 +16,7 @@ const QUOTE_REQUESTS = {
         .catch(err => reject(err))
     })
   },
-  [quoteType.HITOKOTO]: () => {
+  [QuoteType.HITOKOTO]: () => {
     return new Promise((resolve, reject) => {
       get('https://v1.hitokoto.cn/?c=d&c=e&c=h&c=i&c=j&c=k')
         .then(res => resolve({
@@ -27,7 +27,7 @@ const QUOTE_REQUESTS = {
         .catch(err => reject(err))
     })
   },
-  [quoteType.JINRISHICI]: () => {
+  [QuoteType.JINRISHICI]: () => {
     return new Promise((resolve, reject) => {
       try {
         load(res => {
@@ -43,11 +43,11 @@ const QUOTE_REQUESTS = {
       }
     })
   },
-  [quoteType.CUSTOM]: () => {
+  [QuoteType.CUSTOM]: () => {
     return new Promise((resolve, reject) => {
       try {
         resolve({
-          content: store.state.quote.val,
+          content: store.state.settings.quote.val,
           author: '迭名',
           english: ''
         })
@@ -56,7 +56,7 @@ const QUOTE_REQUESTS = {
       }
     })
   },
-  [quoteType.YOUDAO]: () => {
+  [QuoteType.YOUDAO]: () => {
     return new Promise((resolve, reject) => {
       const today = dayjs().format('YYYY-MM-DD')
       get('https://dict.youdao.com/infoline?apiversion=5.0&mode=publish&update=auto&date=' + today)
@@ -76,7 +76,7 @@ const QUOTE_REQUESTS = {
         .catch(err => reject(err))
     })
   },
-  [quoteType.ICIBA]: () => {
+  [QuoteType.ICIBA]: () => {
     return new Promise((resolve, reject) => {
       const today = dayjs().format('YYYY-MM-DD')
       get('http://sentence.iciba.com/index.php?c=dailysentence&m=getdetail&title=' + today)
@@ -90,7 +90,7 @@ const QUOTE_REQUESTS = {
         .catch(err => reject(err))
     })
   },
-  [quoteType.ONEYIJU]: () => {
+  [QuoteType.ONEYIJU]: () => {
     return new Promise((resolve, reject) => {
       get('https://api.xygeng.cn/one')
         .then(res => {
@@ -108,7 +108,7 @@ const QUOTE_REQUESTS = {
 
 /**
  * 通过类型名获取引言
- * @param {quoteType} type
+ * @param {QuoteType} type
  * @return {Promise<{content: string, author: string, english: string}>}
  */
 export function getQuoteByName(type) {

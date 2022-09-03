@@ -1,5 +1,5 @@
 import image from '/public/logo.png'
-import {isUTools} from '@/util/platforms'
+import {isUTools} from '@/util/common'
 
 export function requestNotificationPermission() {
   if (!isUTools()) {

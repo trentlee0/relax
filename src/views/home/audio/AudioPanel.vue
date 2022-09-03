@@ -11,12 +11,12 @@
             <v-card
               color="secondary"
               class="d-flex align-center justify-center align-center"
-              :class="{active: currentIndex === noneAudioIndex}"
+              :class="{active: isNoneAudio}"
               height="80"
               title="关闭背景音乐"
-              @click="changeAudio(noneAudioIndex)"
+              @click="changeAudio()"
             >
-              <MyIcon large>mdi-volume-off</MyIcon>
+              <MyIcon dark large>mdi-volume-off</MyIcon>
             </v-card>
           </v-col>
 
@@ -34,7 +34,7 @@
                 height="80"
                 gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
                 :src="card.src"
-                :class="{active: currentIndex === index}"
+                :class="{active: audioIndex === index}"
               >
                 <v-card-subtitle v-text="card.title"></v-card-subtitle>
               </v-img>
@@ -43,10 +43,12 @@
         </v-row>
         <v-row>
           <v-slider
-            hint="音量"
+            :hint="'音量 ' + viewVolume + '%'"
             max="100"
             min="0"
+            dense
             thumb-label
+            persistent-hint
             v-model="viewVolume"
           ></v-slider>
         </v-row>
@@ -56,11 +58,12 @@
 </template>
 
 <script>
-import {isUTools} from '@/util/platforms'
 import {Howl, Howler} from 'howler'
-import audios from '@/config/audios'
+import audios from '@/common/audio'
 import MyIcon from '@/components/MyIcon'
-import {defaultSettings} from '@/config/constants'
+import {Settings} from '@/common/constant'
+import hotkeys from 'hotkeys-js'
+import shortcuts from '@/common/shortcuts'
 
 export default {
   name: 'AudioPanel',
@@ -74,8 +77,8 @@ export default {
   data() {
     return {
       isPlaying: false,
-      currentIndex: -1,
-      muted: false,
+      isMuted: false,
+      audioIndex: -1,
       realVolume: 0.5,
       sound: null,
       audios: [],
@@ -85,56 +88,51 @@ export default {
     }
   },
   computed: {
-    isUTools() {
-      return isUTools()
-    },
-    isVolumeOff() {
-      return this.currentIndex === this.noneAudioIndex
-    },
-    isMuted() {
-      return this.muted
-    },
-    isVolumeMute() {
-      return !this.isVolumeOff && this.isMuted
-    },
-    isVolumeHigh() {
-      return !this.isVolumeOff && !this.isMuted
-    },
     viewVolume: {
       set(val) {
         this.realVolume = val / 100
-        this.muted = this.realVolume === 0
-        if (!this.isPlaying || this.currentIndex === this.noneAudioIndex) return
+        this.isMuted = this.realVolume === 0
+        if (!this.isPlaying || this.isNoneAudio) return
         this.setVolume(this.realVolume)
       },
       get() {
-        return this.realVolume * 100
+        return Math.round(this.realVolume * 100)
       }
     },
     currentAudioCardName() {
-      return this.currentIndex === this.noneAudioIndex ? defaultSettings.backgroundMusic.selected : this.cards[this.currentIndex].name
+      return this.isNoneAudio ? Settings.DEFAULT.backgroundMusic.selected : this.cards[this.audioIndex].name
     },
-    noneAudioIndex() {
-      return -1
+    isNoneAudio() {
+      return this.audioIndex === -1
     }
+  },
+  created() {
+    hotkeys(Object.values(shortcuts.audio).join(','), 'home', (event, handler) => {
+      event.preventDefault()
+      if (!this.isShow) return
+      switch (handler.key) {
+        case shortcuts.audio.UP_MOVE:
+          this.setVolume(this.realVolume + 0.05)
+          break
+        case shortcuts.audio.DOWN_MOVE:
+          this.setVolume(this.realVolume - 0.05)
+          break
+        case shortcuts.audio.LEFT_MOVE:
+          this.changeAudio(this.audioIndex === -1 ? this.audios.length - 1 : this.audioIndex - 1)
+          break
+        case shortcuts.audio.RIGHT_MOVE:
+          this.changeAudio(this.audioIndex === this.audios.length - 1 ? -1 : this.audioIndex + 1)
+          break
+      }
+    })
   },
   mounted() {
     this.audios = audios.map(item => item.path)
     this.cards = audios.map(item => ({name: item.name, title: item.chinese, src: item.picture}))
 
-    const selectedName = this.$store.state.backgroundMusic.selected
-    if (selectedName === defaultSettings.backgroundMusic.selected) {
-      this.currentIndex = this.noneAudioIndex
-    } else {
-      for (let i = 0; i < this.cards.length; i++) {
-        if (this.cards[i].name === selectedName) {
-          this.currentIndex = i
-          break
-        }
-      }
-    }
+    this.audioIndex = this.cards.findIndex(card => card.name === this.$store.state.settings.backgroundMusic.selected)
 
-    this.realVolume = this.$store.state.backgroundMusic.volume
+    this.realVolume = this.$store.state.settings.backgroundMusic.volume
 
     window.onload = () => this.initAudio()
 
@@ -167,32 +165,30 @@ export default {
     playAudio() {
       if (this.sound) {
         this.sound.stop()
-        this.initAudio(this.currentIndex)
+        this.initAudio(this.audioIndex)
         this.sound.play()
       } else {
-        this.initAudio(this.currentIndex)
+        this.initAudio(this.audioIndex)
         this.sound.play()
       }
     },
     pauseAudio() {
-      if (this.sound) {
-        this.sound.pause()
-      }
+      if (this.sound) this.sound.pause()
     },
     stopAudio() {
       if (this.sound) this.sound.stop()
     },
     setVolume(vol) {
+      this.realVolume = vol
       if (this.sound) {
-        this.realVolume = vol
         this.sound.volume(vol)
         this.$store.commit('SET_BACKGROUND_MUSIC', [this.currentAudioCardName, this.realVolume])
       }
     },
     switchMute() {
-      this.muted = !this.muted
-      Howler.mute(this.muted)
-      if (this.muted) {
+      this.isMuted = !this.isMuted
+      Howler.mute(this.isMuted)
+      if (this.isMuted) {
         if (this.realVolume === 0) return
         this.prevVolume = this.realVolume
         this.realVolume = 0
@@ -201,17 +197,15 @@ export default {
         this.setVolume(this.prevVolume)
       }
     },
-    changeAudio(index) {
-      if (index === this.currentIndex) {
-        if (!this.isPlaying) this.playAudio()
-        else this.pauseAudio()
-        return
+    changeAudio(index = -1) {
+      if (index === this.audioIndex) {
+        this.isPlaying ? this.pauseAudio() : this.playAudio()
+      } else {
+        if (index === -1) this.pauseAudio()
+        this.audioIndex = index
+        this.$store.commit('SET_BACKGROUND_MUSIC', [this.currentAudioCardName, this.realVolume])
+        this.playAudio()
       }
-      if (index === this.noneAudioIndex) this.pauseAudio()
-
-      this.currentIndex = index
-      this.$store.commit('SET_BACKGROUND_MUSIC', [this.currentAudioCardName, this.realVolume])
-      this.playAudio()
     },
     closeEvent() {
       this.$emit('close')
