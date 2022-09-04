@@ -23,56 +23,8 @@
       </v-btn>
     </v-toolbar>
 
-    <ToTop></ToTop>
-
-    <Dialog
-      title="是否重置设置？"
-      :show="deleteSettingDialog"
-      @confirm="deleteSettingDialogOk"
-      @cancel="deleteSettingDialog = false"
-    >
-    </Dialog>
-
-    <Dialog
-      title="是否删除统计数据？"
-      :show="deleteStatisticDialog"
-      @confirm="deleteStatisticDialogOk"
-      @cancel="deleteStatisticDialog = false"
-    >
-    </Dialog>
-
-    <v-snackbar
-      v-model="successSnackbar"
-      :value="true"
-      :timeout="2000"
-      color="success"
-    >
-      <MyIcon>mdi-check-circle-outline</MyIcon>
-      <strong class="pl-2"> {{ successSnackbarMsg }}</strong>
-    </v-snackbar>
-
-    <v-snackbar
-      v-model="infoSnackbar"
-      :value="true"
-      :timeout="2000"
-    >
-      <strong class="pl-2"> {{ infoSnackbarMsg }}</strong>
-    </v-snackbar>
-
-    <v-snackbar
-      v-model="errorSnackbar"
-      :value="true"
-      :timeout="5000"
-      color="error"
-    >
-      <strong class="pl-2"> {{ errorSnackbarMsg }}</strong>
-    </v-snackbar>
-
-    <div id="container">
-      <v-list
-        subheader
-        three-line
-      >
+    <div>
+      <v-list>
         <v-subheader class="font-weight-bold">时间</v-subheader>
 
         <v-list-item>
@@ -110,13 +62,11 @@
           <v-checkbox
             v-model="automaticTiming.working"
             label="自动专注计时"
-            dense
           ></v-checkbox>
         </v-list-item>
 
         <v-list-item>
           <v-checkbox
-            dense
             v-model="automaticTiming.resting"
             label="自动休息计时"
           ></v-checkbox>
@@ -125,16 +75,11 @@
 
       <v-divider></v-divider>
 
-      <v-list
-        flat
-        subheader
-        three-line
-      >
+      <v-list>
         <v-subheader class="font-weight-bold">提醒</v-subheader>
 
         <v-list-item>
           <v-checkbox
-            dense
             v-model="notification.whenEndOfWorkingTime"
             label="专注结束发送通知"
           ></v-checkbox>
@@ -142,7 +87,6 @@
 
         <v-list-item v-if="isUTools">
           <v-checkbox
-            dense
             v-model="notification.showWindowWhenEndOfWorkingTime"
             label="专注结束显示主窗口"
           ></v-checkbox>
@@ -150,14 +94,12 @@
 
         <v-list-item>
           <v-checkbox
-            dense
             v-model="notification.beforeEndOfWorkingTime"
             label="专注结束前 15 秒发送通知"
           ></v-checkbox>
         </v-list-item>
         <v-list-item>
           <v-checkbox
-            dense
             v-model="notification.whenEndOfRestingTime"
             label="休息结束发送通知"
           ></v-checkbox>
@@ -166,51 +108,62 @@
 
       <v-divider></v-divider>
 
-      <v-list
-        flat
-        subheader
-        three-line
-      >
+      <v-list>
         <v-subheader class="font-weight-bold">通用</v-subheader>
+        <v-list-item>
+          <v-checkbox
+            v-model="enableFocusEfficiency"
+            label="开启记录专注效率"
+          ></v-checkbox>
+        </v-list-item>
 
         <v-list-item>
           <v-list-item-content>
-            <v-subheader class="pl-0">引言来源</v-subheader>
-            <v-select
-              v-model="quoteSourceSelectedItem"
-              :items="quoteSourceItems"
-              menu-props="auto"
-              dense
-              label="Hello"
-              solo
-            >
-            </v-select>
+            <v-list-item>
+              <v-list-item-content>
+                <v-row align="center">
+                  <v-col>引言来源</v-col>
+                  <v-col>
+                    <v-select
+                      v-model="quoteSourceSelectedItem"
+                      :items="quoteSourceItems"
+                      menu-props="auto"
+                      solo
+                    >
+                    </v-select>
 
-            <v-text-field
-              v-if="isCustomQuote"
-              label="请输入引言"
-              autofocus
-              dense
-              v-model="customQuote"
-              solo
-            ></v-text-field>
+                    <v-text-field
+                      v-if="isCustomQuote"
+                      label="请输入引言"
+                      autofocus
+                      v-model="customQuote"
+                      solo
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-list-item-content>
+            </v-list-item>
 
-            <v-subheader class="pl-0">背景来源</v-subheader>
-            <v-select
-              v-model="backgroundSelectedItem"
-              :items="backgroundTypeItems"
-              menu-props="auto"
-              dense
-              solo
-            ></v-select>
-
+            <v-list-item>
+              <v-list-item-content>
+                <v-row align="center">
+                  <v-col>背景来源</v-col>
+                  <v-col>
+                    <v-select
+                      v-model="backgroundSelectedItem"
+                      :items="backgroundTypeItems"
+                      menu-props="auto"
+                      solo
+                    ></v-select>
+                  </v-col>
+                </v-row>
+              </v-list-item-content>
+            </v-list-item>
 
             <div v-if="isColor" class="d-flex justify-center">
               <v-col>
                 <v-card :style="{'background-color': bgColor}">
-                  <v-color-picker
-                    v-model="bgColor"
-                  >
+                  <v-color-picker v-model="bgColor">
                   </v-color-picker>
                 </v-card>
               </v-col>
@@ -224,7 +177,7 @@
                   lazy-validation
                 >
                   <v-file-input
-                    :rules="rules"
+                    :rules="fileRules"
                     dense
                     accept="image/png"
                     :prepend-icon="$vuetify.icons.values['mdi-file-image']"
@@ -264,108 +217,159 @@
                 </v-img>
               </v-card>
             </div>
-
           </v-list-item-content>
         </v-list-item>
       </v-list>
 
       <v-divider></v-divider>
 
-      <v-list
-        flat
-        subheader
-        three-line
-      >
-        <v-subheader class="font-weight-bold">数据</v-subheader>
-        <v-list-item>
-          <v-list-item-content>
-            <v-subheader class="pl-0">导入</v-subheader>
-            <small class="ml-5 text-caption">* 会覆盖原数据</small>
-            <v-row>
-              <v-col cols="6">
-                <v-file-input
-                  accept=".json"
-                  outlined
-                  dense
-                  v-model="settingFile"
-                  @change="importSettingFile = $event"
-                  label="选择导入设置文件"
-                ></v-file-input>
-              </v-col>
-              <v-col cols="6">
-                <v-btn class="mt-1" color="primary" @click="importSetting">
-                  开始导入
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-list-item-content>
-        </v-list-item>
+      <v-list>
+        <v-subheader class="font-weight-bold">设置数据</v-subheader>
+        <v-list-item-group>
+          <v-list-item @click="$refs.settingFileInput.click()">
+            <v-list-item-icon>
+              <MyIcon>mdi-file-restore-outline</MyIcon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>导入设置数据</v-list-item-title>
+              <input
+                type="file"
+                ref="settingFileInput"
+                accept=".json"
+                style="display: none"
+                @change="importSetting"
+              >
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item @click="exportSetting">
+            <v-list-item-icon>
+              <MyIcon>mdi-cloud-upload-outline</MyIcon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>导出设置数据</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item @click="dialog.deleteSettingDialog = true">
+            <v-list-item-icon>
+              <MyIcon color="error">mdi-restore</MyIcon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>重置设置</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list-item-group>
+      </v-list>
 
-        <v-list-item>
-          <v-list-item-content>
-            <v-row>
-              <v-col cols="6">
-                <v-file-input
-                  accept=".json"
-                  outlined
-                  dense
-                  v-model="statisticFile"
-                  @change="importStatisticFile = $event"
-                  label="选择导入统计文件"
-                ></v-file-input>
-              </v-col>
-              <v-col cols="6">
-                <v-btn class="mt-1" color="primary" @click="importStatistic">
-                  开始导入
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-list-item-content>
-        </v-list-item>
+      <v-divider></v-divider>
 
-        <v-list-item>
-          <v-list-item-content>
-            <v-subheader class="pl-0">导出</v-subheader>
-            <v-row class="pl-2 pr-2">
-              <v-col>
-                <v-btn block large color="primary" @click="exportSetting">
-                  导出设置数据
-                </v-btn>
-              </v-col>
-            </v-row>
+      <v-list>
+        <v-subheader class="font-weight-bold">统计数据</v-subheader>
+        <v-list-item-group>
+          <v-list-item @click="$refs.statisticFileInput.click()">
+            <v-list-item-icon>
+              <MyIcon>mdi-file-restore-outline</MyIcon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>导入统计数据</v-list-item-title>
+              <input
+                type="file"
+                ref="statisticFileInput"
+                accept=".json"
+                style="display: none"
+                @change="importStatistic"
+              >
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item @click="exportStatistic">
+            <v-list-item-icon>
+              <MyIcon>mdi-cloud-upload-outline</MyIcon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>导出统计数据</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item @click="dialog.deleteStatisticDialog = true">
+            <v-list-item-icon>
+              <MyIcon color="error">mdi-delete-outline</MyIcon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>删除统计数据</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list-item-group>
+      </v-list>
 
-            <v-row class="pl-2 pr-2">
-              <v-col>
-                <v-btn block large color="primary" @click="exportStatistic">
-                  导出统计数据
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-list-item-content>
-        </v-list-item>
+      <v-divider></v-divider>
 
-        <v-list-item>
-          <v-list-item-content>
-            <v-subheader class="pl-0">删除</v-subheader>
-            <v-row class="pl-2 pr-2">
-              <v-col>
-                <v-btn block large color="error" @click="deleteSetting">
-                  重置设置
-                </v-btn>
-              </v-col>
-            </v-row>
+      <v-list>
+        <v-subheader class="font-weight-bold">其它</v-subheader>
 
-            <v-row class="pl-2 pr-2">
-              <v-col>
-                <v-btn block large color="error" @click="deleteStatistic">
-                  删除统计数据
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-list-item-content>
-        </v-list-item>
+        <v-list-item-group>
+          <v-list-item @click="$router.push('/help')">
+            <v-list-item-icon>
+              <MyIcon>mdi-help-circle-outline</MyIcon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>帮助页面</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list-item-group>
       </v-list>
     </div>
+
+
+    <Dialog
+      title="是否重置设置？"
+      :show="dialog.deleteSettingDialog"
+      @confirm="deleteSettingDialogOk"
+      @cancel="dialog.deleteSettingDialog = false"
+    >
+    </Dialog>
+
+    <Dialog
+      title="是否删除统计数据？"
+      :show="dialog.deleteStatisticDialog"
+      @confirm="deleteStatisticDialogOk"
+      @cancel="dialog.deleteStatisticDialog = false"
+    >
+    </Dialog>
+
+    <v-snackbar
+      v-model="snackbar.success.show"
+      :value="true"
+      :timeout="2000"
+      color="success"
+      min-width="200"
+    >
+      <div style="display: flex; align-items: center;">
+        <MyIcon>mdi-check-circle-outline</MyIcon>
+        <strong class="pl-2"> {{ snackbar.success.msg }}</strong>
+      </div>
+    </v-snackbar>
+
+    <v-snackbar
+      v-model="snackbar.info.show"
+      :value="true"
+      :timeout="2000"
+      min-width="200"
+    >
+      <div style="display: flex; align-items: center;">
+        <strong class="pl-2"> {{ snackbar.info.msg }}</strong>
+      </div>
+    </v-snackbar>
+
+    <v-snackbar
+      v-model="snackbar.error.show"
+      :value="true"
+      :timeout="5000"
+      color="error"
+      min-width="200"
+    >
+      <div style="display: flex; align-items: center;">
+        <MyIcon>mdi-close-circle-outline</MyIcon>
+        <strong class="pl-2"> {{ snackbar.error.msg }}</strong>
+      </div>
+    </v-snackbar>
   </div>
 </template>
 
@@ -383,14 +387,13 @@ import statistics from '@/api/statistics'
 import {arrayBufferToBase64ImagePNG} from '@/util/request'
 import {mapState} from 'vuex'
 import MyIcon from '@/components/MyIcon'
-import ToTop from '@/components/ToTop'
 import dayjs from 'dayjs'
 import hotkeys from 'hotkeys-js'
 import shortcuts from '@/common/shortcuts'
 
 export default {
   name: 'Setting',
-  components: {ToTop, Dialog, MyIcon},
+  components: {Dialog, MyIcon},
   data() {
     return {
       quoteSourceSelectedItem: '',
@@ -399,24 +402,33 @@ export default {
       bgColor: '#616161',
       bgImage: '',
       networkImage: '',
-      successSnackbar: false,
-      successSnackbarMsg: '',
-      errorSnackbar: false,
-      errorSnackbarMsg: '',
-      infoSnackbar: false,
-      infoSnackbarMsg: '',
-      deleteSettingDialog: false,
-      deleteStatisticDialog: false,
+      snackbar: {
+        success: {
+          show: false,
+          msg: ''
+        },
+        error: {
+          show: false,
+          msg: ''
+        },
+        info: {
+          show: false,
+          msg: ''
+        }
+      },
+      dialog: {
+        deleteSettingDialog: false,
+        deleteStatisticDialog: false
+      },
       fileMaxSize: 2_000_000,
-      rules: [
+      fileRules: [
         value => !value || value.size < this.fileMaxSize || '背景图片大小应该小于' + this.fileMaxSize / 1_000_000 + 'MB！'
       ],
       imageSizeValid: true,
-      importSettingFile: null,
-      importStatisticFile: null,
       workingTime: 0,
       restingTime: 0,
       automaticTiming: {},
+      enableFocusEfficiency: false,
       settingFile: null,
       statisticFile: null,
       shortcuts: shortcuts
@@ -444,7 +456,8 @@ export default {
       workingTimeFromStore: state => state.settings.workingTime / 60,
       restingTimeFromStore: state => state.settings.restingTime / 60,
       notification: state => state.settings.notification,
-      automaticTimingFromStore: state => state.settings.automaticTiming
+      automaticTimingFromStore: state => state.settings.automaticTiming,
+      general: state => state.settings.general
     }),
     quoteSourceItems() {
       return Object
@@ -486,6 +499,10 @@ export default {
       this.quoteSourceSelectedItem = quoteChinese[this.quote.type]
       this.automaticTiming = {...this.automaticTimingFromStore}
 
+      if (this.general) {
+        this.enableFocusEfficiency = this.general.enableFocusEfficiency || false
+      }
+
       if (this.$store.state.settings.quote.val) this.customQuote = this.$store.state.settings.quote.val
 
       if (this.background.val) {
@@ -509,7 +526,7 @@ export default {
 
         const selectedBackgroundType = this.getKeyByValue(backgroundChinese, this.backgroundSelectedItem)
         if (this.background.type !== selectedBackgroundType) {
-          this.showInfoSnackBar('请重新进入使背景生效')
+          this.infoSnackbar('请重新进入使背景生效')
         }
         switch (selectedBackgroundType) {
           case BackgroundType.COLOR:
@@ -529,49 +546,41 @@ export default {
         this.$store.commit('SET_RESTING_TIME', this.restingTime * 60)
         this.$store.commit('SET_NOTIFICATION', this.notification)
         this.$store.commit('SET_AUTOMATIC_TIMING', {...this.automaticTiming})
+        this.$store.commit('SET_FOCUS_EFFICIENCY', this.enableFocusEfficiency)
 
-        this.showSuccessSnackBar('保存成功')
+        this.successSnackbar('保存成功')
       } catch (err) {
-        this.showErrorSnackBar('保存失败，原因：' + err.message)
+        this.errorSnackbar('保存失败，原因：' + err.message)
       }
     },
-    deleteSetting() {
-      this.deleteSettingDialog = true
+    successSnackbar(msg) {
+      this.snackbar.success.show = true
+      this.snackbar.success.msg = msg
     },
-    showSuccessSnackBar(msg) {
-      this.successSnackbar = true
-      this.successSnackbarMsg = msg
+    errorSnackbar(msg) {
+      this.snackbar.error.show = true
+      this.snackbar.error.msg = msg
     },
-    showErrorSnackBar(msg) {
-      this.errorSnackbar = true
-      this.errorSnackbarMsg = msg
-    },
-    showInfoSnackBar(msg) {
-      this.infoSnackbar = true
-      this.infoSnackbarMsg = msg
+    infoSnackbar(msg) {
+      this.snackbar.info.show = true
+      this.snackbar.info.msg = msg
     },
     deleteSettingDialogOk() {
       this.$store.commit('RESET')
       settings.clearTempCache().then(() => {
         this.initState()
         console.log(this.$store.state)
-        this.deleteSettingDialog = false
-        this.showSuccessSnackBar('重置成功')
-      }).catch(err => this.showErrorSnackBar('重置失败，原因：' + err.message))
-    },
-    deleteStatistic() {
-      this.deleteStatisticDialog = true
+        this.dialog.deleteSettingDialog = false
+        this.successSnackbar('重置成功')
+      }).catch(err => this.errorSnackbar('重置失败，原因：' + err.message))
     },
     deleteStatisticDialogOk() {
       statistics.removeStatistic()
         .then(() => {
-          this.deleteStatisticDialog = false
-          this.showSuccessSnackBar('删除成功')
+          this.dialog.deleteStatisticDialog = false
+          this.successSnackbar('删除成功')
         })
-        .catch(err => this.showErrorSnackBar('删除失败，原因：' + err.message))
-    },
-    toTop() {
-      scrollTo(0, 0)
+        .catch(err => this.errorSnackbar('删除失败，原因：' + err.message))
     },
     getKeyByValue(obj, targetVal) {
       for (let [key, val] of Object.entries(obj)) if (val === targetVal) return key
@@ -599,42 +608,48 @@ export default {
     },
     exportSetting() {
       settings.exportSettingToJSON(this.$store.state.settings)
-        .then(() => this.showSuccessSnackBar('导出成功'))
-        .catch(err => this.showErrorSnackBar('导出失败，原因：' + err.message))
+        .then(() => this.successSnackbar('导出成功'))
+        .catch(err => this.errorSnackbar('导出失败，原因：' + err.message))
     },
-    importSetting() {
-      let file = this.importSettingFile
+    importSetting(e) {
+      let file = e.target.files[0]
       if (!file) {
-        this.showErrorSnackBar('请选择文件')
+        this.errorSnackbar('请选择文件')
         return
       }
       settings.importJSONToSetting(file).then(res => {
         this.$store.commit('SET_ALL', res.data)
         this.initState()
-        this.showSuccessSnackBar('导入成功')
+        this.successSnackbar('导入成功')
       }).catch(err => {
-        this.showErrorSnackBar('导入失败，原因：' + err.message)
+        this.errorSnackbar('导入失败，原因：' + err.message)
       })
-      this.settingFile = null
+      this.clearFileInput(e.target)
+    },
+    clearFileInput(file) {
+      let form = document.createElement('form')
+      document.body.appendChild(form)
+      form.appendChild(file)
+      form.reset()
+      document.body.removeChild(form)
     },
     exportStatistic() {
       statistics.exportStatisticToJSON(`relax_statistics_${dayjs().format('YYYY-MM-DD')}.json`)
-        .then(() => this.showSuccessSnackBar('导出成功'))
-        .catch(err => this.showErrorSnackBar('导出失败，原因：' + err.message))
+        .then(() => this.successSnackbar('导出成功'))
+        .catch(err => this.errorSnackbar('导出失败，原因：' + err.message))
     },
-    importStatistic() {
-      let file = this.importStatisticFile
+    importStatistic(e) {
+      let file = e.target.files[0]
       if (!file) {
-        this.showErrorSnackBar('请选择文件')
+        this.errorSnackbar('请选择文件')
         return
       }
       statistics.exportStatisticToJSON('relax_statistics_back.json').then(() => {
         statistics.importJSONToStatistic(file)
-          .then(() => this.showSuccessSnackBar('导入成功'))
-          .catch(err => this.showErrorSnackBar('导入失败，原因：' + err.message))
-        this.statisticFile = null
+          .then(() => this.successSnackbar('导入成功'))
+          .catch(err => this.errorSnackbar('导入失败，原因：' + err.message))
       })
-
+      this.clearFileInput(e.target)
     }
   }
 }

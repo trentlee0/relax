@@ -105,8 +105,30 @@
           >
             <div class="tick-time-div">
               <div>
-                <MyIcon :dark="isDarkStyle" :light="!isDarkStyle" v-show="isWorkingTime">mdi-laptop</MyIcon>
-                <MyIcon :dark="isDarkStyle" :light="!isDarkStyle" v-show="!isWorkingTime">mdi-coffee-outline</MyIcon>
+                <MyIcon
+                  :dark="isDarkStyle"
+                  :light="!isDarkStyle"
+                  v-show="!isPause && isWorkingTime"
+                  title="专注中"
+                >
+                  mdi-laptop
+                </MyIcon>
+                <MyIcon
+                  :dark="isDarkStyle"
+                  :light="!isDarkStyle"
+                  v-show="!isPause && !isWorkingTime"
+                  title="休息中"
+                >
+                  mdi-coffee-outline
+                </MyIcon>
+                <MyIcon
+                  :dark="isDarkStyle"
+                  :light="!isDarkStyle"
+                  v-show="isPause"
+                  title="暂停中"
+                >
+                  mdi-timer-pause-outline
+                </MyIcon>
               </div>
 
               <div class="tick" :class="fontColorClass">
@@ -173,20 +195,9 @@
           column
         >
           <v-radio
-            :label="focusEfficiency.terrible"
-            value="terrible"
-          ></v-radio>
-          <v-radio
-            :label="focusEfficiency.ordinary"
-            value="ordinary"
-          ></v-radio>
-          <v-radio
-            :label="focusEfficiency.good"
-            value="good"
-          ></v-radio>
-          <v-radio
-            :label="focusEfficiency.wonderful"
-            value="wonderful"
+            v-for="item in focusEfficiency"
+            :value="item[0]"
+            :label="item[1]"
           ></v-radio>
         </v-radio-group>
       </v-card-text>
@@ -231,7 +242,13 @@ import Timer from 'timer.js'
 import {getQuoteByName} from '@/api/quote'
 import {formatDurationSeconds} from '@/util/date'
 import {requestNotificationPermission, showNotice} from '@/util/notification'
-import {BackgroundType, ClockStatus, UToolsFeatureCodes, FocusEfficiency} from '@/common/constant'
+import {
+  BackgroundType,
+  ClockStatus,
+  UToolsFeatureCodes,
+  FocusEfficiency,
+  focusEfficiencyChinese
+} from '@/common/constant'
 import settings from '@/api/settings'
 import {getImageByName} from '@/api/image'
 import statistics from '@/api/statistics'
@@ -288,13 +305,9 @@ export default {
       // 'volumeOff' | 'volumeMute' | 'volumeHigh'
       volumeMode: 'volumeOff',
       shortcuts: shortcuts,
-      focusResult: 'ordinary',
-      focusEfficiency: {
-        terrible: FocusEfficiency.TERRIBLE,
-        ordinary: FocusEfficiency.ORDINARY,
-        good: FocusEfficiency.GOOD,
-        wonderful: FocusEfficiency.WONDERFUL
-      }
+      focusResult: FocusEfficiency.ORDINARY,
+      focusEfficiency: Object.entries(focusEfficiencyChinese),
+      focusDuration: 0
     }
   },
   computed: {
@@ -304,7 +317,8 @@ export default {
       workingTime: state => state.settings.workingTime,
       restingTime: state => state.settings.restingTime,
       notification: state => state.settings.notification,
-      automaticTiming: state => state.settings.automaticTiming
+      automaticTiming: state => state.settings.automaticTiming,
+      enableFocusEfficiency: state => state.settings.general && state.settings.general.enableFocusEfficiency
     }),
     progressSize() {
       if (isUTools()) return 290
@@ -462,21 +476,14 @@ export default {
           that.progress = 0
           that.isPlaying = false
 
-          statistics.add(that.showTip, that.totalTime / 60, that.currentStatus, that.startTimestamp)
-
-          that.switchClock()
-
-          setTimeout(() => {
-            that.tick = that.totalTime
-            that.progress = 100
-
-            if (that.automaticTiming.working && that.isWorkingTime) {
-              that.startTimer()
-            }
-            if (that.automaticTiming.resting && that.isRestingTime) {
-              that.startTimer()
-            }
-          }, that.resetTimeout)
+          // 打开记录专注效率对话框
+          if (that.enableFocusEfficiency && that.isWorkingTime) {
+            that.focusDuration = that.totalTime / 60
+            that.dialog.obtainFocusResultDialog = true
+          } else {
+            statistics.add(that.showTip, that.totalTime / 60, that.currentStatus, that.startTimestamp, Date.now(), false)
+            that.switchAndStartClock()
+          }
         }
       })
 
@@ -601,6 +608,21 @@ export default {
       this.status = (this.status + 1) % 2
       this.tick = this.totalTime
     },
+    switchAndStartClock() {
+      this.switchClock()
+
+      setTimeout(() => {
+        this.tick = this.totalTime
+        this.progress = 100
+
+        if (this.automaticTiming.working && this.isWorkingTime) {
+          this.startTimer()
+        }
+        if (this.automaticTiming.resting && this.isRestingTime) {
+          this.startTimer()
+        }
+      }, this.resetTimeout)
+    },
     switchToRest() {
       this.status = 1
       this.tick = this.totalTime
@@ -629,7 +651,13 @@ export default {
       let duration = Math.floor((this.totalTime - this.tick) / 60)
       if (duration >= 1) {
         console.log('save')
-        statistics.add(this.showTip, duration, this.currentStatus, this.startTimestamp)
+        // 打开记录专注效率对话框
+        if (this.enableFocusEfficiency && this.isWorkingTime) {
+          this.focusDuration = duration
+          this.dialog.obtainFocusResultDialog = true
+        } else {
+          statistics.add(this.showTip, duration, this.currentStatus, this.startTimestamp, Date.now(), false)
+        }
       }
 
       this.timer.stop()
@@ -638,7 +666,17 @@ export default {
     },
     handleObtainFocusResult() {
       this.dialog.obtainFocusResultDialog = false
-      console.log(this.focusResult)
+      statistics.add(
+        this.showTip,
+        this.focusDuration,
+        this.currentStatus,
+        this.startTimestamp,
+        Date.now(),
+        true,
+        this.focusResult
+      )
+      this.switchAndStartClock()
+      this.focusResult = FocusEfficiency.ORDINARY
     },
     snackbar(msg) {
       this.snack.show = true

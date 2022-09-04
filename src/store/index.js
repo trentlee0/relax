@@ -12,13 +12,15 @@ function migrate() {
   const settings = settingsStore.getSync('settings')
   if (!settings) {
     state.settings = {
+      version: 1,
       background: settingsStore.getSync(DataKey.Background) || deepCopy(Settings.DEFAULT.background),
       quote: settingsStore.getSync(DataKey.Quote) || deepCopy(Settings.DEFAULT.quote),
       workingTime: settingsStore.getSync(DataKey.WorkingTime) || deepCopy(Settings.DEFAULT.workingTime),
       restingTime: settingsStore.getSync(DataKey.RestingTime) || deepCopy(Settings.DEFAULT.restingTime),
       notification: settingsStore.getSync(DataKey.Notification) || deepCopy(Settings.DEFAULT.notification),
       automaticTiming: settingsStore.getSync(DataKey.AutomaticTiming) || deepCopy(Settings.DEFAULT.automaticTiming),
-      backgroundMusic: settingsStore.getSync(DataKey.BackgroundMusic) || deepCopy(Settings.DEFAULT.backgroundMusic)
+      backgroundMusic: settingsStore.getSync(DataKey.BackgroundMusic) || deepCopy(Settings.DEFAULT.backgroundMusic),
+      general: deepCopy(Settings.DEFAULT.general)
     }
     settingsStore.setSync(DataKey.Settings, deepCopy(state.settings))
 
@@ -30,6 +32,8 @@ function migrate() {
     settingsStore.removeSync(DataKey.BackgroundMusic)
     settingsStore.removeSync(DataKey.AutomaticTiming)
   } else {
+    if (!settings.version) settings.version = 1
+    if (!settings.general) settings.general = deepCopy(Settings.DEFAULT.general)
     state.settings = settings
   }
 }
@@ -86,6 +90,14 @@ export default new Vuex.Store({
     },
     SET_AUTOMATIC_TIMING(state, automaticTiming) {
       state.settings.automaticTiming = automaticTiming
+      settingsStore.setSync(DataKey.Settings, deepCopy(state.settings))
+    },
+    SET_FOCUS_EFFICIENCY(state, enableFocusEfficiency) {
+      if (state.settings.general) {
+        state.settings.general.enableFocusEfficiency = enableFocusEfficiency
+      } else {
+        state.settings.general = {enableFocusEfficiency}
+      }
       settingsStore.setSync(DataKey.Settings, deepCopy(state.settings))
     }
   }

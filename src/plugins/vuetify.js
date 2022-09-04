@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import Vuetify from 'vuetify/lib/framework'
 import {
   mdiArrowRightDropCircle,
   mdiVolumeOff,
@@ -30,9 +31,18 @@ import {
   mdiCalendar,
   mdiHomeOutline,
   mdiRadioboxBlank,
-  mdiRadioboxMarked
+  mdiRadioboxMarked,
+  mdiTimerPauseOutline,
+  mdiMenu,
+  mdiCloseThick,
+  mdiBackupRestore,
+  mdiFileRestoreOutline,
+  mdiRestore,
+  mdiDeleteOutline,
+  mdiCloudUploadOutline,
+  mdiHelpCircleOutline,
+  mdiCloseCircleOutline
 } from '@mdi/js'
-import Vuetify from 'vuetify/lib/framework'
 
 Vue.use(Vuetify)
 
@@ -65,6 +75,16 @@ export default new Vuetify({
       'mdi-chevron-right': mdiChevronRight,
       'mdi-calendar': mdiCalendar,
       'mdi-home-outline': mdiHomeOutline,
+      'mdi-timer-pause-outline': mdiTimerPauseOutline,
+      'mdi-close-thick': mdiCloseThick,
+      'mdi-cloud-upload-outline': mdiCloudUploadOutline,
+      'mdi-backup-restore': mdiBackupRestore,
+      'mdi-file-restore-outline': mdiFileRestoreOutline,
+      'mdi-restore': mdiRestore,
+      'mdi-delete-outline': mdiDeleteOutline,
+      'mdi-help-circle-outline': mdiHelpCircleOutline,
+      'mdi-close-circle-outline': mdiCloseCircleOutline,
+      menu: mdiMenu,
       checkboxOn: mdiCheckboxMarked,
       checkboxOff: mdiCheckboxBlankOutline,
       file: mdiPaperclip,

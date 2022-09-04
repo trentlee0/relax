@@ -1,10 +1,11 @@
-import {ClockStatus, DataKey} from '@/common/constant'
+import {ClockStatus, DataKey, FocusEfficiency} from '@/common/constant'
 import dayjs from 'dayjs'
 import storage, {Msg} from '@/util/storage'
 import collect from 'collect.js'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import {exportJSON, importJSON} from '@/util/file'
 import * as string from '@/util/string'
+import {createArray} from '@/util/common'
 
 dayjs.extend(customParseFormat)
 
@@ -15,14 +16,20 @@ class StatisticStore {
    * @param {number} startTime timestamp
    * @param {number} endTime timestamp
    * @param {'work' | 'rest'} status
+   * @param {string} efficiency
+   * @param {boolean} isAppendEfficiency
    * @return {Promise<Msg>}
    */
-  add(name, duration, status, startTime, endTime = Date.now()) {
+  add(name, duration, status, startTime, endTime = Date.now(), isAppendEfficiency = true, efficiency = FocusEfficiency.ORDINARY) {
     const key = string.format('%s/%s', DataKey.Statistics, dayjs().format('YYYY/MM'))
     return new Promise((resolve, reject) => {
       storage.get(key).then(res => {
         let data = res.data || []
-        data.push({name, startTime, endTime, duration, status})
+        const item = {name, startTime, endTime, duration, status}
+        if (status === ClockStatus.WORK && isAppendEfficiency) {
+          item.efficiency = efficiency
+        }
+        data.push(item)
 
         storage.set(key, data)
           .then(res => resolve(res))
@@ -98,8 +105,7 @@ class StatisticStore {
       this.getDay(year, month, dayOfMonth).then(res => {
         let data = res.data.filter(item => item.status === ClockStatus.WORK)
 
-        const dayRange = new Array(24)
-        dayRange.fill(0)
+        const dayRange = createArray(24, 0)
         data.forEach(item => {
           let startTime = dayjs(item.startTime)
           let endTime = dayjs(item.startTime).add(item.duration, 'm')
@@ -316,8 +322,6 @@ class StatisticStore {
    * @return {Promise<Msg>}
    */
   getDailyItems(dayFormat, beginStamp = undefined, endStamp = undefined) {
-    console.log(dayjs(beginStamp).format())
-    console.log(dayjs(endStamp).format())
     return new Promise((resolve, reject) => {
       storage.queryLikeAsArray(this.getBetweenKey(beginStamp, endStamp)).then(({data}) => {
         data = beginStamp && endStamp ? data.filter(item => beginStamp <= item.startTime && item.startTime <= endStamp) : data
@@ -351,11 +355,27 @@ class StatisticStore {
       const today = dayjs()
       const before7day = today.subtract(6, 'd').startOf('day')
       this.getDailyItems(dateFormat, before7day.valueOf(), today.valueOf()).then(({data}) => {
-        const dailyMinutes = new Array(7).fill(0, 0, 7)
+        const dailyMinutes = createArray(7, 0)
+        const dailyEfficiencyMinutes = {
+          [FocusEfficiency.TERRIBLE]: createArray(7, 0),
+          [FocusEfficiency.ORDINARY]: createArray(7, 0),
+          [FocusEfficiency.GOOD]: createArray(7, 0),
+          [FocusEfficiency.WONDERFUL]: createArray(7, 0)
+        }
+
         const arr = Object.entries(data.data)
         arr.forEach((value, index) => {
           const i = dayjs(value[0], dateFormat).diff(before7day, 'day')
+
           if (i >= 0 && i < 7) {
+            collect(value[1].items)
+              .filter(item => item.status === ClockStatus.WORK)
+              .groupBy(item => item.efficiency || FocusEfficiency.ORDINARY)
+              .each((currentItem, key) => {
+                dailyEfficiencyMinutes[key][i] = currentItem.all()
+                  .map(item => item.duration)
+                  .reduce((p, c) => p + c, 0)
+              })
             dailyMinutes[i] = value[1].workSum || 0
           }
         })
@@ -365,7 +385,7 @@ class StatisticStore {
           dailyMinuteLabels.push(today.subtract(i, 'd').format('MM/DD'))
         }
         dailyMinuteLabels.push('昨天', '今天')
-        resolve(Msg.instance({dailyMinutes, dailyMinuteLabels}))
+        resolve(Msg.instance({dailyMinutes, dailyEfficiencyMinutes, dailyMinuteLabels}))
       }).catch(err => reject(err))
     })
   }

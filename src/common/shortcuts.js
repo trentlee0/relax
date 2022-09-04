@@ -2,8 +2,8 @@ import {isMacOS} from '@/util/common'
 
 export default {
   global: {
-    HOME: 'F',
-    STATISTIC: 'G',
+    HOME: 'M',
+    STATISTIC: 'N',
     SETTING: ','
   },
   home: {

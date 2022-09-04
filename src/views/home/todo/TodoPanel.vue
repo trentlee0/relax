@@ -287,7 +287,10 @@ export default {
     },
     checkedTask({taskId, done}) {
       const task = this.tasks.find(task => task.id === taskId)
-      if (task) task.done = done
+      if (task) {
+        task.done = done
+        task.checkedTime = Date.now()
+      }
     },
     createTask() {
       if (!this.newTaskTitle || !this.newTaskTitle.trim()) return

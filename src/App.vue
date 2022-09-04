@@ -13,10 +13,18 @@
 <script>
 import hotkeys from 'hotkeys-js'
 import shortcuts from '@/common/shortcuts'
+import storage from '@/util/storage'
 
 export default {
   name: 'App',
   created() {
+    const visited = storage.getSync('visited')
+    if (!visited) {
+      console.log('first')
+      this.$router.push('/help')
+      storage.setSync('visited', 1)
+    }
+
     this.darkLightAutoSwitch()
     hotkeys(Object.values(shortcuts.global).join(','), (event, handler) => {
       event.preventDefault()

@@ -39,10 +39,10 @@ export default {
   methods: {
     refreshData() {
       let d = this.pagination.pageDate
-      statistics.getItemsByDay(d.year(), d.month() + 1, d.date()).then(res => {
+      statistics.getItemsByDay(d.year(), d.month() + 1, d.date()).then(({data}) => {
         this.option.xAxis = {
           name: '时刻',
-          data: res.data.details
+          data: data.details
         }
         this.option.yAxis = {
           type: 'value',
@@ -53,9 +53,9 @@ export default {
         this.option.series = [{
           name: '时刻',
           type: 'bar',
-          data: res.data.timeRange
+          data: data.timeRange
         }]
-        this.workTimesSum = res.data.sum
+        this.workTimesSum = data.sum
       })
     },
     prev() {

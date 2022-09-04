@@ -11,7 +11,13 @@
       </div>
     </v-card-subtitle>
     <v-card-text>
-      <v-chart :theme="chartTheme" autoresize :option="option" style="height: 300px"></v-chart>
+      <v-chart
+        ref="chart"
+        :theme="chartTheme"
+        autoresize
+        :option="option"
+        style="height: 300px"
+      ></v-chart>
     </v-card-text>
   </v-card>
 </template>
@@ -19,6 +25,8 @@
 <script>
 import MyIcon from '@/components/MyIcon'
 import statistics from '@/api/statistics'
+import {focusEfficiencyChinese} from '@/common/constant'
+import {mapState} from 'vuex'
 
 export default {
   name: 'TrendOverview',
@@ -26,7 +34,15 @@ export default {
   data() {
     return {
       option: {
-        tooltip: {},
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
+        legend: {
+          show: true
+        },
         xAxis: {
           data: []
         },
@@ -38,34 +54,53 @@ export default {
     }
   },
   computed: {
+    ...mapState({
+      enableFocusEfficiency: state => state.settings.general && state.settings.general.enableFocusEfficiency
+    }),
     chartTheme() {
       return this.$vuetify.theme.isDark ? 'dark' : ''
     }
   },
   methods: {
     refreshData() {
-      statistics.getLast7WorkTime().then(res => {
-        const sum = res.data.dailyMinutes.reduce((acc, cur) => acc + cur, 0)
-        const length = res.data.dailyMinutes.length - 1
+      statistics.getLast7WorkTime().then(({data}) => {
+        this.$refs.chart.clear()
+        const sum = data.dailyMinutes.reduce((acc, cur) => acc + cur, 0)
+        const length = data.dailyMinutes.length - 1
         if (sum && length) this.minutesAvg = Math.ceil(sum / length)
 
         this.option.xAxis = {
           name: '日期',
-          data: res.data.dailyMinuteLabels
+          data: data.dailyMinuteLabels
         }
-        let max = res.data.dailyMinutes.reduce((p, n) => Math.max(p, n))
+        let max = data.dailyMinutes.reduce((p, n) => Math.max(p, n))
         this.option.yAxis = {
           type: 'value',
           name: '分钟',
           min: 0,
           max: max <= 5 ? 5 : max
         }
-        this.option.series = [{
-          name: '日期',
-          data: res.data.dailyMinutes,
-          type: 'line',
-          smooth: true
-        }]
+
+        if (this.enableFocusEfficiency) {
+          const items = Object.entries(data.dailyEfficiencyMinutes)
+          this.option.legend.show = true
+          this.option.series = items.map(item => ({
+            type: 'bar',
+            stack: 'total',
+            name: focusEfficiencyChinese[item[0]],
+            data: item[1],
+            smooth: true,
+            emphasis: {focus: 'series'}
+          }))
+        } else {
+          this.option.legend.show = false
+          this.option.series = [{
+            name: '日期',
+            data: data.dailyMinutes,
+            type: 'line',
+            smooth: true
+          }]
+        }
       })
     }
   }

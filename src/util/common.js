@@ -54,3 +54,13 @@ export function isWindows() {
 export function deepCopy(obj) {
   return JSON.parse(JSON.stringify(obj))
 }
+
+/**
+ * @param {number} length
+ * @param {any} defaultVal
+ * @return {any[]}
+ */
+export function createArray(length, defaultVal = undefined) {
+  if (defaultVal === undefined) return new Array(length)
+  return new Array(length).fill(defaultVal, 0, length)
+}

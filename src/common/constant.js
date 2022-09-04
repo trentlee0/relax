@@ -70,10 +70,17 @@ export const crossDomainQuote = [
 ]
 
 export class FocusEfficiency {
-  static TERRIBLE = '心不在焉'
-  static ORDINARY = '一心一意'
-  static GOOD = '专心致志'
-  static WONDERFUL = '心如止水'
+  static TERRIBLE = 'terrible'
+  static ORDINARY = 'ordinary'
+  static GOOD = 'good'
+  static WONDERFUL = 'wonderful'
+}
+
+export const focusEfficiencyChinese = {
+  terrible: '心不在焉',
+  ordinary: '一心一意',
+  good: '专心致志',
+  wonderful: '心如止水'
 }
 
 /**
@@ -109,6 +116,8 @@ export class DataKey {
 export class Settings {
   static DEFAULT = new Settings()
 
+  version = 1
+
   background = {
     type: BackgroundType.BING,
     val: ''
@@ -137,5 +146,9 @@ export class Settings {
   backgroundMusic = {
     selected: 'none',
     volume: 0.5
+  }
+
+  general = {
+    enableFocusEfficiency: false
   }
 }
