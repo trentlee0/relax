@@ -48,12 +48,13 @@ export default new Vuex.Store({
       settingsStore.clearTempCache()
       state.settings.background.type = type
       // 仅仅用户自定义图片/网络图片/颜色背景才需要保存
-      if (val) {
-        if (type === BackgroundType.COLOR || type === BackgroundType.NETWORK) state.settings.background.val = val
-        else if (type === BackgroundType.IMAGE) {
-          if (isUTools()) state.settings.background.val = val
-          else settingsStore.setTempCache(type, val)
-        } else state.settings.background.val = ''
+      if (type === BackgroundType.COLOR || type === BackgroundType.NETWORK) {
+        state.settings.background.val = val
+      } else if (type === BackgroundType.IMAGE) {
+        if (isUTools()) state.settings.background.val = val
+        else settingsStore.setTempCache(type, val)
+      } else {
+        state.settings.background.val = ''
       }
       settingsStore.setSync(DataKey.Settings, deepCopy(state.settings))
     },

@@ -140,9 +140,8 @@
 
     <Dialog
       title="清空所有已完成任务？"
-      :show="dialog"
+      :show.sync="dialog"
       @confirm="deleteFinishedTasks"
-      @cancel="dialog = false"
     >
     </Dialog>
   </div>

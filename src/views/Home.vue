@@ -76,9 +76,8 @@
       <TodoPanel></TodoPanel>
       <Dialog
         title="当前正在计时，是否切换到新任务？"
-        :show="dialog.switchTaskDialog"
+        :show.sync="dialog.switchTaskDialog"
         @confirm="switchTask"
-        @cancel="dialog.switchTaskDialog = false"
       >
       </Dialog>
     </v-navigation-drawer>
@@ -205,25 +204,22 @@
 
     <Dialog
       :title="'当前正在' + statusText + '中，是否切换计时器？'"
-      :show="dialog.switchClockDialog"
+      :show.sync="dialog.switchClockDialog"
       @confirm="switchTimer"
-      @cancel="dialog.switchClockDialog = false"
     >
     </Dialog>
 
     <Dialog
       title="是否结束计时？"
-      :show="dialog.restoreDialog"
+      :show.sync="dialog.restoreDialog"
       @confirm="restoreTimer"
-      @cancel="dialog.restoreDialog = false"
     >
     </Dialog>
 
     <Dialog
       :title="`是否添加任务${tempTask ? '「' + tempTask.title + '」' : ''}并开始计时？`"
-      :show="dialog.addTaskConfirmDialog"
+      :show.sync="dialog.addTaskConfirmDialog"
       @confirm="addTaskHandle"
-      @cancel="dialog.addTaskConfirmDialog = false"
     >
     </Dialog>
 
@@ -285,6 +281,7 @@ export default {
       backgroundImage: '',
       quoteText: '',
       taskName: '',
+      // 切换任务专注任务时临时保存任务信息
       tempTask: null,
       drawer: false,
       audioPanel: false,
@@ -662,7 +659,9 @@ export default {
 
       this.timer.stop()
       this.dialog.restoreDialog = false
-      this.taskName = ''
+      if (!this.enableFocusEfficiency) {
+        this.taskName = ''
+      }
     },
     handleObtainFocusResult() {
       this.dialog.obtainFocusResultDialog = false
@@ -675,6 +674,7 @@ export default {
         true,
         this.focusResult
       )
+      this.taskName = ''
       this.switchAndStartClock()
       this.focusResult = FocusEfficiency.ORDINARY
     },

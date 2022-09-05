@@ -128,13 +128,17 @@
                       v-model="quoteSourceSelectedItem"
                       :items="quoteSourceItems"
                       menu-props="auto"
+                      hide-details
                       solo
                     >
                     </v-select>
-
+                  </v-col>
+                </v-row>
+                <v-row v-if="isCustomQuote">
+                  <v-col></v-col>
+                  <v-col>
                     <v-text-field
-                      v-if="isCustomQuote"
-                      label="请输入引言"
+                      label="输入引言"
                       autofocus
                       v-model="customQuote"
                       solo
@@ -153,6 +157,7 @@
                       v-model="backgroundSelectedItem"
                       :items="backgroundTypeItems"
                       menu-props="auto"
+                      hide-details
                       solo
                     ></v-select>
                   </v-col>
@@ -160,63 +165,64 @@
               </v-list-item-content>
             </v-list-item>
 
-            <div v-if="isColor" class="d-flex justify-center">
-              <v-col>
-                <v-card :style="{'background-color': bgColor}">
-                  <v-color-picker v-model="bgColor">
-                  </v-color-picker>
-                </v-card>
-              </v-col>
-            </div>
+            <v-list-item v-show="isColor || isImage || isNetworkImage">
+              <v-list-item-content>
+                <div v-if="isColor" class="d-flex justify-center">
+                  <v-col>
+                    <v-card :style="{'background-color': bgColor}">
+                      <v-color-picker v-model="bgColor">
+                      </v-color-picker>
+                    </v-card>
+                  </v-col>
+                </div>
 
-            <div v-else-if="isImage">
-              <div>
-                <v-form
-                  ref="form"
-                  v-model="imageSizeValid"
-                  lazy-validation
-                >
-                  <v-file-input
-                    :rules="fileRules"
-                    dense
-                    accept="image/png"
-                    :prepend-icon="$vuetify.icons.values['mdi-file-image']"
-                    label="选择背景图片"
-                    @click:clear="clearImageFile"
-                    @change="selectImageFile"
-                  ></v-file-input>
-                </v-form>
-              </div>
-              <v-card>
-                <v-img
-                  :src="bgImage"
-                  class="white--text align-end"
-                  :gradient="!bgImage || !bgImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
-                  height="250px"
-                >
-                </v-img>
-              </v-card>
-            </div>
+                <div v-else-if="isImage">
+                  <div>
+                    <v-form
+                      ref="form"
+                      v-model="imageSizeValid"
+                      lazy-validation
+                    >
+                      <v-file-input
+                        :rules="fileRules"
+                        outlined
+                        accept="image/png"
+                        :prepend-icon="$vuetify.icons.values['mdi-file-image']"
+                        :label="bgImage ? '改变背景图片' : '选择背景图片'"
+                        @click:clear="bgImage = ''"
+                        @change="selectImageFile"
+                      ></v-file-input>
+                    </v-form>
+                  </div>
+                  <v-card>
+                    <div
+                      class="div-img"
+                      :style="{backgroundImage: `url('${bgImage}')`}"
+                      v-text="bgImage ? '' : '暂无图片'"
+                    >
+                    </div>
+                  </v-card>
+                </div>
 
-            <div v-else-if="isNetworkImage">
-              <v-text-field
-                v-model="networkImage"
-                label="图片地址"
-                menu-props="auto"
-                dense
-                solo
-                @input="changeNetworkImage"
-              ></v-text-field>
-              <v-card>
-                <v-img
-                  :src="networkImage"
-                  class="white--text align-end"
-                  :gradient="!networkImage || !networkImage.trim() ? 'to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)' : ''"
-                  height="250px"
-                >
-                </v-img>
-              </v-card>
-            </div>
+                <div v-else-if="isNetworkImage">
+                  <v-text-field
+                    v-model="networkImage"
+                    label="输入图片链接"
+                    menu-props="auto"
+                    outlined
+                    @input="changeNetworkImage"
+                  ></v-text-field>
+                  <v-card>
+                    <div
+                      class="div-img"
+                      :style="{backgroundImage: `url('${networkImage}')`}"
+                      v-text="networkImage ? '' : '暂无图片'"
+                    >
+                    </div>
+                  </v-card>
+                </div>
+              </v-list-item-content>
+            </v-list-item>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -271,6 +277,7 @@
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>导入统计数据</v-list-item-title>
+              <v-list-item-subtitle class="text-caption">选择文件后，将会导出以前的数据，再进行导入操作</v-list-item-subtitle>
               <input
                 type="file"
                 ref="statisticFileInput"
@@ -320,17 +327,15 @@
 
     <Dialog
       title="是否重置设置？"
-      :show="dialog.deleteSettingDialog"
+      :show.sync="dialog.deleteSettingDialog"
       @confirm="deleteSettingDialogOk"
-      @cancel="dialog.deleteSettingDialog = false"
     >
     </Dialog>
 
     <Dialog
       title="是否删除统计数据？"
-      :show="dialog.deleteStatisticDialog"
+      :show.sync="dialog.deleteStatisticDialog"
       @confirm="deleteStatisticDialogOk"
-      @cancel="dialog.deleteStatisticDialog = false"
     >
     </Dialog>
 
@@ -586,6 +591,7 @@ export default {
       for (let [key, val] of Object.entries(obj)) if (val === targetVal) return key
     },
     selectImageFile(file) {
+      console.log(file)
       if (!file) return
       if (this.isUTools) {
         this.bgImage = file.path
@@ -602,9 +608,6 @@ export default {
       setTimeout(() => {
         this.networkImage = this.networkImage === ' ' ? '' : this.networkImage
       }, 200)
-    },
-    clearImageFile() {
-      this.bgImage = ' '
     },
     exportSetting() {
       settings.exportSettingToJSON(this.$store.state.settings)
@@ -655,5 +658,11 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="sass" scoped>
+.div-img
+  height: 250px
+  background-size: cover
+  display: flex
+  justify-content: center
+  align-items: center
 </style>

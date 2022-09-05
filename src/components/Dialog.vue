@@ -65,6 +65,7 @@ export default {
       this.$emit('confirm')
     },
     no() {
+      this.$emit('update:show', false)
       this.$emit('cancel')
     }
   }

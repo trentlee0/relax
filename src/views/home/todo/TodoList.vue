@@ -48,15 +48,23 @@
         </v-hover>
       </v-list>
     </v-menu>
+
+    <Dialog
+      title="将要删除任务？"
+      :show.sync="removeTaskDialog"
+      @confirm="handleDelete"
+    >
+    </Dialog>
   </div>
 </template>
 
 <script>
 import TodoItem from '@/views/home/todo/TodoItem'
+import Dialog from '@/components/Dialog'
 
 export default {
   name: 'TodoList',
-  components: {TodoItem},
+  components: {Dialog, TodoItem},
   props: ['tasks'],
   data() {
     return {
@@ -64,7 +72,9 @@ export default {
       x: 0,
       y: 0,
       activeTaskId: null,
-      editingTaskId: null
+      editingTaskId: null,
+      removeTaskDialog: false,
+      removeTaskId: null
     }
   },
   watch: {
@@ -105,7 +115,12 @@ export default {
       this.editingTaskId = this.activeTaskId
     },
     handleMenuDeleteClick() {
-      this.$bus.$emit('removeTask', {taskId: this.activeTaskId})
+      this.removeTaskId = this.activeTaskId
+      this.removeTaskDialog = true
+    },
+    handleDelete() {
+      this.$bus.$emit('removeTask', {taskId: this.removeTaskId})
+      this.removeTaskDialog = false
     }
   }
 }
