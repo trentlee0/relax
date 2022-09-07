@@ -41,7 +41,8 @@ import {
   mdiDeleteOutline,
   mdiCloudUploadOutline,
   mdiHelpCircleOutline,
-  mdiCloseCircleOutline
+  mdiCloseCircleOutline,
+  mdiVolumeMedium
 } from '@mdi/js'
 
 Vue.use(Vuetify)
@@ -53,6 +54,7 @@ export default new Vuetify({
     values: {
       'mdi-volume-off': mdiVolumeOff,
       'mdi-volume-mute': mdiVolumeMute,
+      'mdi-volume-low': mdiVolumeMedium,
       'mdi-volume-high': mdiVolumeHigh,
       'mdi-plus-circle': mdiPlusCircle,
       'mdi-view-dashboard-outline': mdiViewDashboardOutline,

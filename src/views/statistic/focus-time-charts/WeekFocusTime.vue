@@ -17,7 +17,12 @@ export default {
   data() {
     return {
       option: {
-        tooltip: {},
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
         xAxis: {
           data: []
         },

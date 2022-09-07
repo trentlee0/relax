@@ -53,7 +53,7 @@
 
       <v-expansion-panels
         class="mt-1"
-        v-model="panels"
+        v-model="expansionPanels"
         multiple
       >
         <v-expansion-panel>
@@ -162,7 +162,7 @@ export default {
     return {
       tasks: [],
       newTaskTitle: null,
-      panels: [0],
+      expansionPanels: [0],
       dialog: false,
       greeting: null,
       userInfo: null,
@@ -203,20 +203,20 @@ export default {
     this.initState()
   },
   mounted() {
-    this.$bus.$on('startTask', this.startTask)
-    this.$bus.$on('removeTask', this.removeTask)
-    this.$bus.$on('updateTask', this.updateTask)
-    this.$bus.$on('checkedTask', this.checkedTask)
-    this.$bus.$on('toTodoPanel', this.initState)
-    this.$bus.$on('dropTodoItem', this.dropTodoItem)
+    this.$bus.$on('start-focus-task', this.startTask)
+    this.$bus.$on('remove-task', this.removeTask)
+    this.$bus.$on('update-task', this.updateTask)
+    this.$bus.$on('checked-task', this.checkedTask)
+    this.$bus.$on('open-todo-panel', this.initState)
+    this.$bus.$on('drop-todo-item', this.dropTodoItem)
   },
   beforeDestroy() {
-    this.$bus.$off('startTask')
-    this.$bus.$off('removeTask')
-    this.$bus.$off('updateTask')
-    this.$bus.$off('checkedTask')
-    this.$bus.$off('toTodoPanel')
-    this.$bus.$off('dropTodoItem')
+    this.$bus.$off('start-focus-task')
+    this.$bus.$off('remove-task')
+    this.$bus.$off('update-task')
+    this.$bus.$off('checked-task')
+    this.$bus.$off('open-todo-panel')
+    this.$bus.$off('drop-todo-item')
   },
   methods: {
     dropTodoItem({fromIndex, toIndex}) {
@@ -282,7 +282,7 @@ export default {
     },
     startTask({taskId}) {
       const task = this.tasks.find(task => task.id === taskId)
-      if (task) this.$bus.$emit('startTaskTimer', task)
+      if (task) this.$bus.$emit('start-task-timer', task)
     },
     checkedTask({taskId, done}) {
       const task = this.tasks.find(task => task.id === taskId)
@@ -313,7 +313,7 @@ export default {
     tasks: {
       deep: true,
       handler(value) {
-        todos.cover(value)
+        todos.replaceAll(value)
       }
     }
   }

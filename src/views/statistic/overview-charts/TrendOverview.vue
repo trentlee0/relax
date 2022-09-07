@@ -38,7 +38,21 @@ export default {
           trigger: 'axis',
           axisPointer: {
             type: 'shadow'
-          }
+          },
+          formatter: params => (
+            `<div style="display: flex; justify-content: space-between;">
+               <div>${params[0].axisValue}</div>
+               <div>${params.map(item => item.data).reduce((p, c) => p + c, 0)}</div>
+             </div>
+             <div style="margin-top: 5px;">
+               ${params.map(item =>
+              `<div style="display: flex; justify-content: space-between; align-self: center;">
+                <div>${item.marker}&nbsp;${item.seriesName}</div>
+                <div style="display: inline-block;height: inherit; width: 20px;"></div>
+                ${item.data}
+              </div>`).join('')}
+            </div>`
+          )
         },
         legend: {
           show: true

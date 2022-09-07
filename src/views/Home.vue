@@ -43,6 +43,7 @@
         <MyIcon v-show="volumeMode === 'volumeOff'">mdi-volume-off</MyIcon>
         <MyIcon v-show="volumeMode === 'volumeMute'">mdi-volume-mute</MyIcon>
         <MyIcon v-show="volumeMode === 'volumeHigh'">mdi-volume-high</MyIcon>
+        <MyIcon v-show="volumeMode === 'volumeLow'">mdi-volume-low</MyIcon>
       </v-btn>
 
       <v-btn
@@ -61,8 +62,8 @@
     <AudioPanel
       :isShow="audioPanel"
       :dark="isDarkStyle"
+      :volume-status.sync="volumeMode"
       @close="closeAudioPanelEvent"
-      @volumeChange="volumeChangeEvent"
     >
     </AudioPanel>
 
@@ -76,8 +77,8 @@
       <TodoPanel></TodoPanel>
       <Dialog
         title="当前正在计时，是否切换到新任务？"
-        :show.sync="dialog.switchTaskDialog"
-        @confirm="switchTask"
+        :show.sync="dialog.turnToTaskDialog"
+        @confirm="turnToTaskTimer"
       >
       </Dialog>
     </v-navigation-drawer>
@@ -205,21 +206,21 @@
     <Dialog
       :title="'当前正在' + statusText + '中，是否切换计时器？'"
       :show.sync="dialog.switchClockDialog"
-      @confirm="switchTimer"
+      @confirm="handleSwitchTimer"
     >
     </Dialog>
 
     <Dialog
       title="是否结束计时？"
       :show.sync="dialog.restoreDialog"
-      @confirm="restoreTimer"
+      @confirm="handleRestoreTimer"
     >
     </Dialog>
 
     <Dialog
       :title="`是否添加任务${tempTask ? '「' + tempTask.title + '」' : ''}并开始计时？`"
       :show.sync="dialog.addTaskConfirmDialog"
-      @confirm="addTaskHandle"
+      @confirm="handleAddTask"
     >
     </Dialog>
 
@@ -253,10 +254,10 @@ import AudioPanel from '@/views/home/audio/AudioPanel'
 import dayjs from 'dayjs'
 import {isUTools} from '@/util/common'
 import {mapState} from 'vuex'
-import {getSubjectHexColor, hexToBrightness} from '@/util/color'
+import {getSubjectColor, hexToBrightness} from '@/util/color'
 import TodoPanel from '@/views/home/todo/TodoPanel'
 import MyIcon from '@/components/MyIcon'
-import todos from '@/api/todos'
+import todos, {Task} from '@/api/todos'
 import hotkeys from 'hotkeys-js'
 import shortcuts from '@/common/shortcuts'
 
@@ -270,6 +271,7 @@ export default {
       tick: 0,
       isPlaying: false,
       isPause: false,
+      isCompleted: false,
       // 0 表示专注，1 表示休息
       status: 0,
       progress: 100,
@@ -277,9 +279,10 @@ export default {
       startTimestamp: 0,
       // 切换计时器延迟
       resetTimeout: 500,
-      notifyBeforeEndOfTime: 15,
+      notifyWorkedEarlierTime: 15,
       backgroundImage: '',
       quoteText: '',
+      // 当前专注任务名
       taskName: '',
       // 切换任务专注任务时临时保存任务信息
       tempTask: null,
@@ -288,7 +291,7 @@ export default {
       dialog: {
         restoreDialog: false,
         switchClockDialog: false,
-        switchTaskDialog: false,
+        turnToTaskDialog: false,
         addTaskConfirmDialog: false,
         obtainFocusResultDialog: false
       },
@@ -297,14 +300,21 @@ export default {
         timeout: 2000,
         msg: ''
       },
+      notifyText: {
+        workedText: '专注结束了，休息一下吧',
+        restedText: '休息结束啦',
+        readyToRestText: '准备休息啦'
+      },
+      // 用于标记 uTools 进入是否切换并且开始计时器
       isSwitchAndStartTimer: false,
       isDarkStyle: true,
-      // 'volumeOff' | 'volumeMute' | 'volumeHigh'
+      // 'volumeOff' | 'volumeMute' | 'volumeHigh' | 'volumeLow'
       volumeMode: 'volumeOff',
       shortcuts: shortcuts,
       focusResult: FocusEfficiency.ORDINARY,
       focusEfficiency: Object.entries(focusEfficiencyChinese),
-      focusDuration: 0
+      focusDuration: 0,
+      focusTaskName: ''
     }
   },
   computed: {
@@ -409,23 +419,17 @@ export default {
     })
   },
   activated() {
-    hotkeys.setScope('home')
-
     if (!this.isClocking) {
       this.initPage()
     }
   },
-  deactivated() {
-  },
   beforeDestroy() {
     this.timer.stop()
-    this.$bus.$off('startTimer')
-    this.$bus.$emit('stopAudio')
+    this.$bus.$off('start-task-timer')
+    this.$bus.$emit('stop-audio')
   },
   methods: {
     initPage() {
-      window.document.documentElement.style.overflowY = 'hidden'
-
       const that = this
       this.tick = this.totalTime
       this.timer = new Timer({
@@ -437,49 +441,56 @@ export default {
           let s = Math.round(ms / 1000)
           that.tick = s
           that.progress = s * that.ratio
-          if (that.status === 0 && that.notification.beforeEndOfWorkingTime &&
-            that.tick === that.notifyBeforeEndOfTime) {
-            showNotice('准备休息啦', 5000)
+          if (that.tick === that.notifyWorkedEarlierTime && that.notification.beforeEndOfWorkingTime) {
+            that.isWorkingTime && showNotice(that.notifyText.readyToRestText, 5000)
           }
         },
         onstart() {
           that.isPlaying = true
           that.isPause = false
+          that.isCompleted = false
+
           if (that.isWorkingTime) that.playBackgroundMusic()
         },
         onpause() {
           that.isPlaying = false
           that.isPause = true
+
           if (that.isWorkingTime) that.pauseBackgroundMusic()
         },
         onstop() {
-          if (that.isWorkingTime) that.pauseBackgroundMusic()
+          that.isPlaying = false
+          that.isPause = false
 
           that.tick = that.totalTime
           that.progress = 100
-          that.isPlaying = false
-          that.isPause = false
+
+          if (that.isWorkingTime) that.pauseBackgroundMusic()
         },
         onend() {
-          if (that.isWorkingTime) that.pauseBackgroundMusic()
+          that.isPlaying = false
+          that.isPause = false
+          that.isCompleted = true
 
-          if (that.isWorkingTime) {
-            that.notification.whenEndOfWorkingTime && showNotice('专注结束了，休息一下吧')
-            isUTools() && that.notification.showWindowWhenEndOfWorkingTime && that.showUToolsMainWindow()
-          } else if (that.isRestingTime) {
-            that.notification.whenEndOfRestingTime && showNotice('休息结束啦')
-          }
           that.tick = 0
           that.progress = 0
-          that.isPlaying = false
+
+          if (that.isWorkingTime) {
+            that.pauseBackgroundMusic()
+            that.notification.whenEndOfWorkingTime && showNotice(that.notifyText.workedText)
+            isUTools() && that.notification.showWindowWhenEndOfWorkingTime && that.showUToolsMainWindow()
+          } else {
+            that.notification.whenEndOfRestingTime && showNotice(that.notifyText.restedText)
+          }
 
           // 打开记录专注效率对话框
           if (that.enableFocusEfficiency && that.isWorkingTime) {
+            that.focusTaskName = that.showTip
             that.focusDuration = that.totalTime / 60
             that.dialog.obtainFocusResultDialog = true
           } else {
             statistics.add(that.showTip, that.totalTime / 60, that.currentStatus, that.startTimestamp, Date.now(), false)
-            that.switchAndStartClock()
+            that.changeTimer()
           }
         }
       })
@@ -488,7 +499,7 @@ export default {
         this.uToolsMode()
       }
 
-      this.$bus.$on('startTaskTimer', this.startTaskTimer)
+      this.$bus.$on('start-task-timer', this.startTaskTimer)
     },
     showUToolsMainWindow() {
       utools.redirect('休息一下', null)
@@ -511,29 +522,14 @@ export default {
       })
     },
     showDrawer() {
-      this.$bus.$emit('toTodoPanel')
+      this.$bus.$emit('open-todo-panel')
       this.drawer = true
     },
-    startTaskTimer(task) {
-      this.tempTask = task
-      if (this.isWorkingTime && this.isClocking) {
-        if (this.taskName === task.title) {
-          this.snackbar('正在专注中')
-        } else {
-          this.dialog.switchTaskDialog = true
-        }
-      } else {
-        this.switchTask()
-      }
-    },
-    addTaskHandle() {
-      const task = {id: Date.now(), done: false, title: this.tempTask.title}
+    handleAddTask() {
+      const task = new Task(this.tempTask.title)
       this.startTaskTimer(task)
       todos.addFirst(task)
       this.dialog.addTaskConfirmDialog = false
-    },
-    volumeChangeEvent({mode}) {
-      this.volumeMode = mode
     },
     getImage() {
       if (this.bgColor) {
@@ -541,42 +537,42 @@ export default {
         return
       }
       const currentType = this.background.type
-      settings.getTempCache(currentType).then(res => {
+      settings.getTempCache(currentType).then(({data}) => {
         const today = dayjs().format('YYYYMMDD')
-        if (!res.data || !res.data['image'] || res.data['updateTime'] !== today) {
-          getImageByName(currentType).then(data => {
+        if (!data || !data['image'] || data['updateTime'] !== today) {
+          getImageByName(currentType).then(image => {
             // 图片缓存
-            settings.setTempCache(currentType, {image: data, updateTime: today}).then(() => {
-              this.backgroundImage = data
-              getSubjectHexColor(data).then(res => this.changeStyleColor(res))
+            settings.setTempCache(currentType, {image, updateTime: today}).then(() => {
+              this.backgroundImage = image
+              getSubjectColor(image).then(res => this.changeStyleColor(res))
             })
           })
           return
         }
-        this.backgroundImage = res.data['image']
-        getSubjectHexColor(res.data).then(res => this.changeStyleColor(res))
+        this.backgroundImage = data['image']
+        getSubjectColor(data).then(res => this.changeStyleColor(res))
       })
     },
     getQuote() {
-      getQuoteByName(this.quote.type).then(data => this.quoteText = data['content'])
+      getQuoteByName(this.quote.type).then(data => this.quoteText = data.content)
     },
     changeStyleColor(bgHexColor) {
       this.isDarkStyle = hexToBrightness(bgHexColor) <= 0.8
     },
     playBackgroundMusic() {
-      this.$bus.$emit('playAudio')
+      this.$bus.$emit('play-audio')
     },
     pauseBackgroundMusic() {
-      this.$bus.$emit('pauseAudio')
+      this.$bus.$emit('pause-audio')
     },
     switchMuteBackgroundMusic() {
-      this.$bus.$emit('switchMute')
+      this.$bus.$emit('turn-on-mute')
     },
     handleSwitchClick() {
       if (this.isClocking) {
         this.dialog.switchClockDialog = !this.dialog.switchClockDialog
       } else {
-        this.switchClock()
+        this.switchTimerState()
       }
     },
     handleRestoreClick() {
@@ -590,28 +586,31 @@ export default {
       if (this.isPlaying) {
         this.timer.pause()
       } else {
+        // 在计时器开始时，记录任务开始时间
         if (this.tick === this.totalTime) {
           this.startTimestamp = Date.now()
         }
         this.timer.start(this.tick)
       }
     },
-    switchToWork() {
+    switchToWorkState() {
       this.status = 0
       this.tick = this.totalTime
     },
-    switchClock() {
+    switchToRestState() {
+      this.status = 1
+      this.tick = this.totalTime
+    },
+    switchTimerState() {
       this.progress = 100
       this.status = (this.status + 1) % 2
       this.tick = this.totalTime
     },
-    switchAndStartClock() {
-      this.switchClock()
+    // 计时器结束执行
+    changeTimer() {
+      this.switchTimerState()
 
       setTimeout(() => {
-        this.tick = this.totalTime
-        this.progress = 100
-
         if (this.automaticTiming.working && this.isWorkingTime) {
           this.startTimer()
         }
@@ -620,36 +619,47 @@ export default {
         }
       }, this.resetTimeout)
     },
-    switchToRest() {
-      this.status = 1
-      this.tick = this.totalTime
-    },
-    switchTimer() {
+    handleSwitchTimer() {
       this.timer.stop()
       this.dialog.switchClockDialog = false
+
       setTimeout(() => {
-        this.switchClock()
+        this.switchTimerState()
         if (this.isSwitchAndStartTimer) {
           this.startTimer()
           this.isSwitchAndStartTimer = false
         }
       }, 100)
     },
-    switchTask() {
-      const title = this.tempTask.title
-      this.timer.stop()
-      this.switchToWork()
-      this.startTimer()
-      this.taskName = title
-      this.tempTask = null
-      this.dialog.switchTaskDialog = false
+    startTaskTimer(task) {
+      if (this.isWorkingTime && this.isClocking) {
+        if (task.title === this.taskName) {
+          this.snackbar('正在专注中')
+        } else {
+          this.tempTask = task
+          this.dialog.turnToTaskDialog = true
+        }
+      } else {
+        this.tempTask = task
+        this.turnToTaskTimer()
+      }
     },
-    restoreTimer() {
+    turnToTaskTimer() {
+      this.timer.stop()
+      this.switchToWorkState()
+      this.startTimer()
+
+      this.taskName = this.tempTask.title
+      this.tempTask = null
+      this.dialog.turnToTaskDialog = false
+    },
+    handleRestoreTimer() {
       let duration = Math.floor((this.totalTime - this.tick) / 60)
       if (duration >= 1) {
         console.log('save')
         // 打开记录专注效率对话框
         if (this.enableFocusEfficiency && this.isWorkingTime) {
+          this.focusTaskName = this.showTip
           this.focusDuration = duration
           this.dialog.obtainFocusResultDialog = true
         } else {
@@ -658,15 +668,12 @@ export default {
       }
 
       this.timer.stop()
+      this.taskName = ''
       this.dialog.restoreDialog = false
-      if (!this.enableFocusEfficiency) {
-        this.taskName = ''
-      }
     },
     handleObtainFocusResult() {
-      this.dialog.obtainFocusResultDialog = false
       statistics.add(
-        this.showTip,
+        this.focusTaskName,
         this.focusDuration,
         this.currentStatus,
         this.startTimestamp,
@@ -674,9 +681,12 @@ export default {
         true,
         this.focusResult
       )
-      this.taskName = ''
-      this.switchAndStartClock()
+
+      if (this.isCompleted) {
+        this.changeTimer()
+      }
       this.focusResult = FocusEfficiency.ORDINARY
+      this.dialog.obtainFocusResultDialog = false
     },
     snackbar(msg) {
       this.snack.show = true
@@ -692,23 +702,21 @@ export default {
                 if (data) {
                   this.startTaskTimer(data)
                 } else {
-                  this.tempTask = {title}
+                  this.tempTask = new Task(title)
                   this.dialog.addTaskConfirmDialog = true
                 }
               })
-            } else {
-              if (!this.isClocking) {
-                this.switchToWork()
-                this.startTimer()
-              } else if (this.isRestingTime) {
-                this.dialog.switchClockDialog = true
-                this.isSwitchAndStartTimer = true
-              }
+            } else if (!this.isClocking) {
+              this.switchToWorkState()
+              this.startTimer()
+            } else if (this.isRestingTime) {
+              this.dialog.switchClockDialog = true
+              this.isSwitchAndStartTimer = true
             }
             break
           case UToolsFeatureCodes.Rest:
             if (!this.isClocking) {
-              this.switchToRest()
+              this.switchToRestState()
               this.startTimer()
             } else if (this.isWorkingTime) {
               this.dialog.switchClockDialog = true
@@ -716,7 +724,7 @@ export default {
             }
             break
           case UToolsFeatureCodes.StopOrContinue:
-            if (this.tick !== this.totalTime) this.startTimer()
+            if (!this.isCompleted) this.startTimer()
             break
         }
       })

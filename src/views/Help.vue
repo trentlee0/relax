@@ -104,10 +104,6 @@ export default {
         ]
       ]
     }
-  },
-  activated() {
-    hotkeys.setScope('help')
-    window.document.documentElement.style.overflowY = 'overlay'
   }
 }
 </script>

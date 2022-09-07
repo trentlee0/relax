@@ -72,14 +72,17 @@ export default {
     isShow: {
       type: Boolean,
       default: false
+    },
+    volumeStatus: {
+      type: String
     }
   },
   data() {
     return {
       isPlaying: false,
       isMuted: false,
-      audioIndex: -1,
-      realVolume: 0.5,
+      audioIndex: null,
+      realVolume: null,
       sound: null,
       audios: [],
       cards: [],
@@ -92,7 +95,6 @@ export default {
       set(val) {
         this.realVolume = val / 100
         this.isMuted = this.realVolume === 0
-        if (!this.isPlaying || this.isNoneAudio) return
         this.setVolume(this.realVolume)
       },
       get() {
@@ -130,22 +132,22 @@ export default {
     this.audios = audios.map(item => item.path)
     this.cards = audios.map(item => ({name: item.name, title: item.chinese, src: item.picture}))
 
-    this.audioIndex = this.cards.findIndex(card => card.name === this.$store.state.settings.backgroundMusic.selected)
-
     this.realVolume = this.$store.state.settings.backgroundMusic.volume
+
+    this.audioIndex = this.cards.findIndex(card => card.name === this.$store.state.settings.backgroundMusic.selected)
 
     window.onload = () => this.initAudio()
 
-    this.$bus.$on('playAudio', this.playAudio)
-    this.$bus.$on('pauseAudio', this.pauseAudio)
-    this.$bus.$on('stopAudio', this.stopAudio)
-    this.$bus.$on('switchMute', this.switchMute)
+    this.$bus.$on('play-audio', this.playAudio)
+    this.$bus.$on('pause-audio', this.pauseAudio)
+    this.$bus.$on('stop-audio', this.stopAudio)
+    this.$bus.$on('turn-on-mute', this.switchMute)
   },
   beforeDestroy() {
-    this.$bus.$off('playAudio')
-    this.$bus.$off('pauseAudio')
-    this.$bus.$off('stopAudio')
-    this.$bus.$off('switchMute')
+    this.$bus.$off('play-audio')
+    this.$bus.$off('pause-audio')
+    this.$bus.$off('stop-audio')
+    this.$bus.$off('turn-on-mute')
   },
   methods: {
     initAudio(index = 0) {
@@ -182,8 +184,8 @@ export default {
       this.realVolume = vol
       if (this.sound) {
         this.sound.volume(vol)
-        this.$store.commit('SET_BACKGROUND_MUSIC', [this.currentAudioCardName, this.realVolume])
       }
+      this.$store.commit('SET_BACKGROUND_MUSIC', [this.currentAudioCardName, this.realVolume])
     },
     switchMute() {
       this.isMuted = !this.isMuted
@@ -209,22 +211,32 @@ export default {
     },
     closeEvent() {
       this.$emit('close')
+    },
+    emitVolumeStatus(args) {
+      this.$emit('update:volumeStatus', args)
     }
   },
   watch: {
-    isVolumeOff(newVal) {
-      if (newVal) {
-        this.$emit('volumeChange', {mode: 'volumeOff'})
+    realVolume(newVal) {
+      if (newVal === 0) {
+        this.emitVolumeStatus('volumeMute')
+      } else if (this.audioIndex === -1) {
+        this.emitVolumeStatus('volumeOff')
+      } else if (newVal >= 0.4) {
+        this.emitVolumeStatus('volumeHigh')
+      } else {
+        this.emitVolumeStatus('volumeLow')
       }
     },
-    isVolumeMute(newVal) {
-      if (newVal) {
-        this.$emit('volumeChange', {mode: 'volumeMute'})
-      }
-    },
-    isVolumeHigh(newVal) {
-      if (newVal) {
-        this.$emit('volumeChange', {mode: 'volumeHigh'})
+    audioIndex(newVal) {
+      if (newVal === -1) {
+        this.emitVolumeStatus('volumeOff')
+      } else if (this.realVolume === 0) {
+        this.emitVolumeStatus('volumeMute')
+      } else if (this.realVolume >= 0.4) {
+        this.emitVolumeStatus('volumeHigh')
+      } else {
+        this.emitVolumeStatus('volumeLow')
       }
     }
   }
