@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build --mode web && node scripts/build-web.js",
+    "build:utools": "vue-cli-service build --mode utools && node scripts/build-utools.js"
   },
   "dependencies": {
     "@mdi/js": "^6.9.96",

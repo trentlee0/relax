@@ -1,7 +1,7 @@
 <template>
   <div class="pa-1">
     <v-container style="margin-bottom: 150px;">
-      <v-row>
+      <v-row class="mb-0">
         <v-col cols="4">
           <h2 class="text-h6 font-weight-bold">
             待办事项
@@ -12,41 +12,24 @@
             <v-avatar
               class="float-right"
               v-if="hasUser"
-              color="primary"
+              color="secondary"
               size="35"
             >
               <img
-                alt=""
+                alt="avatar"
+                draggable="false"
                 :src="userInfo.avatar"
-              >
+              />
             </v-avatar>
-            <div class="float-right font-weight-bold font-italic" style="line-height: 35px;">
-              <span v-if="hasUser">{{ username }},&nbsp;</span>
-              <span>{{ greeting }}&nbsp;&nbsp;</span>
+            <div class="subtitle-1 float-right font-weight-bold" style="line-height: 35px; margin-right: 5px;">
+              <span v-if="hasUser">{{ username }}, </span>
+              <span>{{ greeting }}</span>
             </div>
-            <div class="text-caption mt-1 text-right mr-1" style="clear: both;">
-              今天 专注 {{ todayWorkTimeFormat }}, 休息 {{ todayRestTimeFormat }}
+            <div class="caption mt-1 text-right mr-1" style="clear: both;">
+              今天专注 {{ todayWorkTimeFormat }}, 休息 {{ todayRestTimeFormat }}
             </div>
           </div>
         </v-col>
-      </v-row>
-
-      <v-row class="my-1 mb-2">
-        <span class="ml-4 primary--text">
-          <strong>总任务</strong>
-          <span class="ml-2">{{ tasks.length }}</span>
-        </span>
-
-        <v-spacer></v-spacer>
-
-        <v-progress-circular
-          :value="progress"
-          size="21"
-          width="3"
-          class="mr-3"
-          color="primary"
-        >
-        </v-progress-circular>
       </v-row>
 
       <v-divider></v-divider>
@@ -180,9 +163,6 @@ export default {
     doneTasksLen() {
       return this.doneTasks.length
     },
-    progress() {
-      return this.tasks.length ? Math.round(this.doneTasksLen / this.tasks.length * 100) : 100
-    },
     hasUser() {
       return this.userInfo
     },
@@ -264,10 +244,9 @@ export default {
         case 14:
         case 15:
         case 16:
-          return '下午好'
         case 17:
+          return '下午好'
         case 18:
-          return '傍晚了'
         case 19:
         case 20:
         case 21:

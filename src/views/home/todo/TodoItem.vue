@@ -25,6 +25,7 @@
         <div
           class="grey--text"
           style="font-size: small;"
+          :title="formatDateTitle(task.id)"
           v-text="formatDate(task.id)"
         ></div>
       </div>
@@ -73,6 +74,9 @@ export default {
     },
     formatDate(timestamp) {
       return dayjs(timestamp).format('MM-DD')
+    },
+    formatDateTitle(timestamp) {
+      return dayjs(timestamp).format('YYYY-MM-DD HH:mm')
     }
   }
 }

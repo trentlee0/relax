@@ -127,7 +127,7 @@
                   v-show="isPause"
                   title="暂停中"
                 >
-                  mdi-timer-pause-outline
+                  mdi-timer-play-outline
                 </MyIcon>
               </div>
 
@@ -162,7 +162,7 @@
             :dark="isDarkStyle"
             :light="!isDarkStyle"
             :title="`开始计时 (${shortcuts.home.START_TIMER})`"
-            @click.stop="startTimer"
+            @click.stop="handleStartTimer"
           >
             <MyIcon v-show="isPlaying">mdi-pause-circle</MyIcon>
             <MyIcon v-show="!isPlaying">mdi-arrow-right-drop-circle</MyIcon>
@@ -242,7 +242,7 @@ import {requestNotificationPermission, showNotice} from '@/util/notification'
 import {
   BackgroundType,
   ClockStatus,
-  UToolsFeatureCodes,
+  UToolsCodes,
   FocusEfficiency,
   focusEfficiencyChinese
 } from '@/common/constant'
@@ -349,6 +349,10 @@ export default {
           return 500
       }
     },
+    quoteMarginBottom() {
+      if (isUTools()) return 10
+      return this.$vuetify.breakpoint.name === 'xs' ? 32 : 10
+    },
     fontColorClass() {
       return this.isDarkStyle ? 'font-dark' : 'font-light'
     },
@@ -358,21 +362,11 @@ export default {
     bgImage() {
       return this.background.type !== BackgroundType.COLOR ? this.backgroundImage : ''
     },
-    quoteMarginBottom() {
-      if (isUTools()) return 10
-      return this.$vuetify.breakpoint.name === 'xs' ? 32 : 10
-    },
-    ratio() {
-      return 100 / this.totalTime
-    },
     tickTimeText() {
       return formatDurationSeconds(this.tick)
     },
     totalTime() {
-      return this.status ? this.restingTime : this.workingTime
-    },
-    showTip() {
-      return this.isWorkingTime && this.taskName ? this.taskName : this.statusText
+      return this.isRestingTime ? this.restingTime : this.workingTime
     },
     isWorkingTime() {
       return this.status === 0
@@ -380,36 +374,47 @@ export default {
     isRestingTime() {
       return this.status === 1
     },
+    showTip() {
+      return this.isWorkingTime && this.taskName ? this.taskName : this.statusText
+    },
     statusText() {
-      return this.status ? '休息' : '专注'
+      return this.isRestingTime ? '休息' : '专注'
     },
     currentStatus() {
-      return this.status ? ClockStatus.REST : ClockStatus.WORK
+      return this.isRestingTime ? ClockStatus.REST : ClockStatus.WORK
     },
     isClocking() {
       return this.isPlaying || this.isPause
+    },
+    hasDialog() {
+      return Object.values(this.dialog).some(isShow => isShow)
     }
   },
   created() {
-    requestNotificationPermission()
     this.getImage()
     this.getQuote()
+    setInterval(() => {
+      this.getQuote()
+    }, 2 * 60 * 60 * 1000)
 
     hotkeys(Object.values(shortcuts.home).join(','), 'home', (event, handler) => {
       event.preventDefault()
+      if (this.hasDialog) return
+
       switch (handler.key) {
         case this.shortcuts.home.CHANGE_TIMER:
           this.handleSwitchClick()
           break
         case this.shortcuts.home.START_TIMER:
-          this.startTimer()
+          this.handleStartTimer()
           break
         case this.shortcuts.home.END_TIMER:
           this.handleRestoreClick()
           break
         case this.shortcuts.home.TODO:
           this.audioPanel = false
-          this.drawer = !this.drawer
+          if (this.drawer) this.drawer = false
+          else this.showDrawer()
           break
         case this.shortcuts.home.BACKGROUND_MUSIC:
           this.drawer = false
@@ -417,6 +422,10 @@ export default {
           break
       }
     })
+
+    if (isUTools()) {
+      this.uToolsMode()
+    }
   },
   activated() {
     if (!this.isClocking) {
@@ -427,6 +436,11 @@ export default {
     this.timer.stop()
     this.$bus.$off('start-task-timer')
     this.$bus.$emit('stop-audio')
+  },
+  watch: {
+    hasDialog() {
+      this.$route.meta.disable = this.hasDialog
+    }
   },
   methods: {
     initPage() {
@@ -440,7 +454,7 @@ export default {
           }
           let s = Math.round(ms / 1000)
           that.tick = s
-          that.progress = s * that.ratio
+          that.progress = s * (100 / that.totalTime)
           if (that.tick === that.notifyWorkedEarlierTime && that.notification.beforeEndOfWorkingTime) {
             that.isWorkingTime && showNotice(that.notifyText.readyToRestText, 5000)
           }
@@ -478,7 +492,9 @@ export default {
           if (that.isWorkingTime) {
             that.pauseBackgroundMusic()
             that.notification.whenEndOfWorkingTime && showNotice(that.notifyText.workedText)
-            isUTools() && that.notification.showWindowWhenEndOfWorkingTime && that.showUToolsMainWindow()
+            if (isUTools() && that.notification.showWindowWhenEndOfWorkingTime) {
+              that.showUToolsMainWindow()
+            }
           } else {
             that.notification.whenEndOfRestingTime && showNotice(that.notifyText.restedText)
           }
@@ -494,10 +510,6 @@ export default {
           }
         }
       })
-
-      if (isUTools()) {
-        this.uToolsMode()
-      }
 
       this.$bus.$on('start-task-timer', this.startTaskTimer)
     },
@@ -537,7 +549,9 @@ export default {
         return
       }
       const currentType = this.background.type
+      settings.clearTempCache()
       settings.getTempCache(currentType).then(({data}) => {
+        console.log(data)
         const today = dayjs().format('YYYYMMDD')
         if (!data || !data['image'] || data['updateTime'] !== today) {
           getImageByName(currentType).then(image => {
@@ -565,7 +579,7 @@ export default {
     pauseBackgroundMusic() {
       this.$bus.$emit('pause-audio')
     },
-    switchMuteBackgroundMusic() {
+    muteBackgroundMusic() {
       this.$bus.$emit('turn-on-mute')
     },
     handleSwitchClick() {
@@ -579,13 +593,14 @@ export default {
       if (this.isClocking) {
         this.dialog.restoreDialog = !this.dialog.restoreDialog
       } else {
-        this.taskName = ''
+        if (this.isWorkingTime) this.taskName = ''
       }
     },
-    startTimer() {
+    handleStartTimer() {
       if (this.isPlaying) {
         this.timer.pause()
       } else {
+        requestNotificationPermission()
         // 在计时器开始时，记录任务开始时间
         if (this.tick === this.totalTime) {
           this.startTimestamp = Date.now()
@@ -612,10 +627,10 @@ export default {
 
       setTimeout(() => {
         if (this.automaticTiming.working && this.isWorkingTime) {
-          this.startTimer()
+          this.handleStartTimer()
         }
         if (this.automaticTiming.resting && this.isRestingTime) {
-          this.startTimer()
+          this.handleStartTimer()
         }
       }, this.resetTimeout)
     },
@@ -626,7 +641,7 @@ export default {
       setTimeout(() => {
         this.switchTimerState()
         if (this.isSwitchAndStartTimer) {
-          this.startTimer()
+          this.handleStartTimer()
           this.isSwitchAndStartTimer = false
         }
       }, 100)
@@ -647,7 +662,7 @@ export default {
     turnToTaskTimer() {
       this.timer.stop()
       this.switchToWorkState()
-      this.startTimer()
+      this.handleStartTimer()
 
       this.taskName = this.tempTask.title
       this.tempTask = null
@@ -695,7 +710,8 @@ export default {
     uToolsMode() {
       utools.onPluginEnter(({code, type, payload}) => {
         switch (code) {
-          case UToolsFeatureCodes.Work:
+          case UToolsCodes.Work:
+            this.$router.replace('/')
             if (type === 'over') {
               const title = payload.trim()
               todos.getByTaskName(title).then(({data}) => {
@@ -708,30 +724,31 @@ export default {
               })
             } else if (!this.isClocking) {
               this.switchToWorkState()
-              this.startTimer()
+              this.handleStartTimer()
             } else if (this.isRestingTime) {
               this.dialog.switchClockDialog = true
               this.isSwitchAndStartTimer = true
             }
             break
-          case UToolsFeatureCodes.Rest:
+          case UToolsCodes.Rest:
+            this.$router.replace('/')
             if (!this.isClocking) {
               this.switchToRestState()
-              this.startTimer()
+              this.handleStartTimer()
             } else if (this.isWorkingTime) {
               this.dialog.switchClockDialog = true
               this.isSwitchAndStartTimer = true
             }
             break
-          case UToolsFeatureCodes.StopOrContinue:
-            if (!this.isCompleted) this.startTimer()
+          case UToolsCodes.StopOrContinue:
+            this.$router.replace('/')
+            if (!this.isCompleted) this.handleStartTimer()
             break
         }
       })
 
       utools.onPluginOut(() => {
         this.getImage()
-        this.getQuote()
       })
     }
   }

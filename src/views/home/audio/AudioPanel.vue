@@ -5,9 +5,15 @@
       @click:outside="closeEvent"
       @keydown.esc.stop="closeEvent"
     >
-      <v-sheet class="text-center pa-6">
+      <v-sheet class="text-center pa-6" style="overflow: hidden; overflow-y: auto">
         <v-row dense>
-          <v-col cols="2">
+          <v-col
+            cols="4"
+            sm="3"
+            md="2"
+            lg="2"
+            xl="2"
+          >
             <v-card
               color="secondary"
               class="d-flex align-center justify-center align-center"
@@ -23,7 +29,11 @@
           <v-col
             v-for="(card, index) in cards"
             :key="index"
-            cols="2"
+            cols="4"
+            sm="3"
+            md="2"
+            lg="2"
+            xl="2"
           >
             <v-card
               @click="changeAudio(index)"

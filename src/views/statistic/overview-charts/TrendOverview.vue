@@ -1,15 +1,7 @@
 <template>
   <v-card elevation="2">
     <v-card-title>近七天专注</v-card-title>
-    <v-card-subtitle>
-      <div class="grey--text">
-        <MyIcon color="primary">
-          mdi-laptop
-        </MyIcon>
-        <small style="font-size: x-small;">&nbsp;平均每天 </small>
-        <strong style="font-size: medium;">{{ minutesAvg }}m</strong>
-      </div>
-    </v-card-subtitle>
+    <v-card-subtitle>平均每天 {{ minutesAvg }} 分钟</v-card-subtitle>
     <v-card-text>
       <v-chart
         ref="chart"

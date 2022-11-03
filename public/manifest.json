@@ -1,15 +1,16 @@
 {
   "name": "休息一下",
   "short_name": "Relax",
+  "description": "专注计时，休息提醒，白噪音和待办清单",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FFFFFF",
+  "background_color": "#FFFFFF",
   "icons": [
     {
-      "src": "/logo.png",
-      "sizes": "100x100",
+      "src": "logo.png",
+      "sizes": "256x256",
       "type": "image/png"
     }
-  ],
-  "start_url": "/index.html",
-  "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#38B47B"
+  ]
 }

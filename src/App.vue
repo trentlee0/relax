@@ -11,44 +11,44 @@
 </template>
 
 <script>
+import storage from '@/util/storage'
+import {DataKey} from '@/common/constant'
 import hotkeys from 'hotkeys-js'
 import shortcuts from '@/common/shortcuts'
-import storage from '@/util/storage'
 
 export default {
   name: 'App',
   created() {
-    const visited = storage.getSync('visited')
-    if (!visited) {
-      console.log('first')
-      this.$router.push('/help')
-      storage.setSync('visited', 1)
+    if (!storage.getSync(DataKey.Visited)) {
+      storage.setSync(DataKey.Visited, 1)
+      if (storage.getSync(DataKey.Background)) {
+        this.$router.push('/help')
+        console.log('v1.2 update')
+      }
     }
 
-    this.darkLightAutoSwitch()
     hotkeys(Object.values(shortcuts.global).join(','), (event, handler) => {
       event.preventDefault()
-      const getPath = () => window.location.hash.substring(1)
       switch (handler.key) {
         case shortcuts.global.HOME:
-          getPath() !== '/' && this.$router.replace('/')
+          this.$router.push('/')
           break
         case shortcuts.global.SETTING:
-          getPath() !== '/setting' && this.$router.push('/setting')
+          this.$router.push('/setting')
           break
         case shortcuts.global.STATISTIC:
-          getPath() !== '/statistic' && this.$router.push('/statistic')
+          this.$router.push('/statistic')
           break
       }
     })
+
+    this.darkLightAutoSwitch()
   },
   methods: {
     darkLightAutoSwitch() {
-      this.$vuetify.theme.dark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      window.matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', event => {
-          this.$vuetify.theme.dark = event.matches
-        })
+      const query = '(prefers-color-scheme: dark)'
+      this.$vuetify.theme.dark = window.matchMedia(query).matches
+      window.matchMedia(query).addEventListener('change', e => this.$vuetify.theme.dark = e.matches)
     }
   }
 }

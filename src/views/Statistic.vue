@@ -16,7 +16,7 @@
 
     <ToTop v-if="isTimelineView"></ToTop>
 
-    <v-tabs centered v-model="tab" @change="tabChangeEvent">
+    <v-tabs center-active centered :mobile-breakpoint="300" v-model="tab" @change="tabChangeEvent">
       <v-tab>总览</v-tab>
       <v-tab>专注统计</v-tab>
       <v-tab>专注时间</v-tab>

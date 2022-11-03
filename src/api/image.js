@@ -16,14 +16,17 @@ const IMAGE_REQUESTS = {
     })
   },
   [BackgroundType.BING]: () => {
-    if (isUTools()) {
-      return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
+      if (isUTools()) {
         get('https://cn.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1')
           .then(res => resolve('https://cn.bing.com/' + res.data['images'][0]['url']))
           .catch(err => reject(err))
-      })
-    }
-    return getImagePNGToBase64('https://api.xygeng.cn/Bing/')
+      } else {
+        get('https://api.xygeng.cn/Bing/')
+          .then(res => resolve(res.data.data.url))
+          .catch(err => reject(err))
+      }
+    })
   },
   [BackgroundType.IMAGE]: () => {
     return new Promise((resolve, reject) => {
