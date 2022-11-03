@@ -6,9 +6,6 @@ export function requestNotificationPermission() {
     if (Notification) {
       if (Notification.permission !== 'granted') {
         Notification.requestPermission()
-          .then(permission => {
-            if (permission !== 'granted') alert('请允许通知权限！')
-          })
       }
     } else {
       console.error('浏览器不支持 Notification')

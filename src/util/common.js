@@ -43,7 +43,7 @@ export function isMacOS() {
 }
 
 export function isWindows() {
-  return isUTools() ? utools.isMacOs() : /win/i.test(navigator.platform)
+  return isUTools() ? utools.isWindows() : /win/i.test(navigator.platform)
 }
 
 

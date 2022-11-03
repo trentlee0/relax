@@ -1,15 +1,7 @@
 <template>
   <v-card elevation="2">
     <v-card-title>近七天专注</v-card-title>
-    <v-card-subtitle>
-      <div class="grey--text">
-        <MyIcon color="primary">
-          mdi-laptop
-        </MyIcon>
-        <small style="font-size: x-small;">&nbsp;平均每天 </small>
-        <strong style="font-size: medium;">{{ minutesAvg }}m</strong>
-      </div>
-    </v-card-subtitle>
+    <v-card-subtitle>平均每天 {{ minutesAvg }} 分钟</v-card-subtitle>
     <v-card-text>
       <v-chart
         ref="chart"
@@ -38,7 +30,21 @@ export default {
           trigger: 'axis',
           axisPointer: {
             type: 'shadow'
-          }
+          },
+          formatter: params => (
+            `<div style="display: flex; justify-content: space-between;">
+               <div>${params[0].axisValue}</div>
+               <div>${params.map(item => item.data).reduce((p, c) => p + c, 0)}</div>
+             </div>
+             <div style="margin-top: 5px;">
+               ${params.map(item =>
+              `<div style="display: flex; justify-content: space-between; align-self: center;">
+                <div>${item.marker}&nbsp;${item.seriesName}</div>
+                <div style="display: inline-block;height: inherit; width: 20px;"></div>
+                ${item.data}
+              </div>`).join('')}
+            </div>`
+          )
         },
         legend: {
           show: true

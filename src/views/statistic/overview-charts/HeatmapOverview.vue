@@ -1,6 +1,7 @@
 <template>
   <v-card elevation="2">
     <v-card-title>近一年专注</v-card-title>
+    <v-card-subtitle>总专注 {{ sumMinute }} 分钟，累计专注 {{ totalDay }} 天</v-card-subtitle>
     <v-card-text>
       <v-chart :theme="chartTheme" autoresize :option="option" style="height: 325px"></v-chart>
     </v-card-text>
@@ -21,6 +22,8 @@ export default {
   },
   data() {
     return {
+      sumMinute: 0,
+      totalDay: 0,
       option: {
         tooltip: {
           formatter: (params) => `${params.data[1]} 分钟，${params.data[0]}`
@@ -82,14 +85,14 @@ export default {
       return this.isDark ? 'dark' : ''
     }
   },
-  mounted() {
-  },
   methods: {
     refreshData() {
       let startDate = dayjs().subtract(1, 'year').startOf('day')
       let endDate = dayjs()
       statistics.getDailyItems('YYYY-MM-DD', startDate.valueOf(), endDate.valueOf()).then(({data}) => {
         const arr = Object.entries(data.data).map(item => [item[0], item[1].workSum])
+        this.sumMinute = arr.map(item => item[1]).reduce((pre, cur) => pre + cur, 0)
+        this.totalDay = arr.length
         this.option.series.data = arr
         this.option.visualMap.max = Math.floor(arr.map(item => item[1]).reduce((p, c) => Math.max(p, c), 0) / 100) * 100
         this.option.calendar.range = [startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')]

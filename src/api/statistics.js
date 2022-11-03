@@ -9,6 +9,44 @@ import {createArray} from '@/util/common'
 
 dayjs.extend(customParseFormat)
 
+
+/**
+ * @param {Array<{name: string, startTime: number, duration: number, status: 'work' | 'rest'}>} arr
+ * @return {number}
+ */
+function getWorkTimeSum(arr) {
+  return arr.filter(item => item.status === ClockStatus.WORK)
+    .map(item => item.duration)
+    .reduce((pre, cur) => pre + cur, 0)
+}
+
+/**
+ * @param {Array<{name: string, startTime: number, duration: number, status: 'work' | 'rest'}>} arr
+ * @return {number}
+ */
+function getRestTimeSum(arr) {
+  return arr.filter(item => item.status === ClockStatus.REST)
+    .map(item => item.duration)
+    .reduce((pre, cur) => pre + cur, 0)
+}
+
+/**
+ * @param {number} beginStamp
+ * @param {number} endStamp
+ * @return {string}
+ */
+function getBetweenKey(beginStamp, endStamp) {
+  let key = DataKey.Statistics + '/'
+  if (beginStamp && endStamp) {
+    let b = dayjs(beginStamp)
+    let e = dayjs(endStamp)
+    if (b.year() === e.year()) {
+      key += b.year() + '/' + (b.month() === e.month() ? string.format('%02d', b.month() + 1) : '')
+    }
+  }
+  return key
+}
+
 class StatisticStore {
   /**
    * @param {string} name
@@ -39,26 +77,6 @@ class StatisticStore {
   }
 
   /**
-   * @param {[{name: string, startTime: number, duration: number, status: 'work' | 'rest'}]} arr
-   * @return {number}
-   */
-  static getWorkTimeSum(arr) {
-    return arr.filter(item => item.status === ClockStatus.WORK)
-      .map(item => item.duration)
-      .reduce((pre, cur) => pre + cur, 0)
-  }
-
-  /**
-   * @param {[{name: string, startTime: number, duration: number, status: 'work' | 'rest'}]} arr
-   * @return {number}
-   */
-  static getRestTimeSum(arr) {
-    return arr.filter(item => item.status === ClockStatus.REST)
-      .map(item => item.duration)
-      .reduce((pre, cur) => pre + cur, 0)
-  }
-
-  /**
    * @param {number} year
    * @param {number} month
    * @return {Promise<Msg>}
@@ -68,8 +86,8 @@ class StatisticStore {
     return new Promise((resolve, reject) => {
       storage.get(key).then(res => {
         let data = res.data || []
-        let monthWorkTime = StatisticStore.getWorkTimeSum(data)
-        let monthRestTime = StatisticStore.getRestTimeSum(data)
+        let monthWorkTime = getWorkTimeSum(data)
+        let monthRestTime = getRestTimeSum(data)
         resolve(Msg.instance({monthWorkTime, monthRestTime}))
       }).catch(err => reject(err))
     })
@@ -86,8 +104,8 @@ class StatisticStore {
       this.getDay(year, month, dayOfMonth)
         .then(res => {
           let data = res.data || []
-          let dayWorkTime = StatisticStore.getWorkTimeSum(data)
-          let dayRestTime = StatisticStore.getRestTimeSum(data)
+          let dayWorkTime = getWorkTimeSum(data)
+          let dayRestTime = getRestTimeSum(data)
           resolve(Msg.instance({dayWorkTime, dayRestTime}))
         })
         .catch(err => reject(err))
@@ -166,6 +184,10 @@ class StatisticStore {
     return new Promise((resolve, reject) => {
       Promise.all(ps).then(res => {
         const weekWorkItems = res.map(item => item.data.dayWorkTime)
+        for (let i = n; i < 7; i++) {
+          weekWorkItems.push(0)
+        }
+        console.log(weekWorkItems)
         resolve(Msg.instance({
           timeRange: weekWorkItems,
           details: [
@@ -196,6 +218,9 @@ class StatisticStore {
     return new Promise((resolve, reject) => {
       Promise.all(ps).then(res => {
         const monthWorkItems = res.map(item => item.data.dayWorkTime)
+        for (let i = n + 1; i <= maxDate; i++) {
+          monthWorkItems.push(0)
+        }
 
         const details = []
         for (let i = 1; i <= maxDate; i++) details.push(string.format('%02d/%02d', month, i))
@@ -270,31 +295,13 @@ class StatisticStore {
   }
 
   /**
-   * @private
-   * @param {number} beginStamp
-   * @param {number} endStamp
-   * @return {string}
-   */
-  getBetweenKey(beginStamp, endStamp) {
-    let key = DataKey.Statistics + '/'
-    if (beginStamp && endStamp) {
-      let b = dayjs(beginStamp)
-      let e = dayjs(endStamp)
-      if (b.year() === e.year()) {
-        key += b.year() + '/' + (b.month() === e.month() ? string.format('%02d', b.month() + 1) : '')
-      }
-    }
-    return key
-  }
-
-  /**
    * @param {number} beginStamp
    * @param {number} endStamp
    * @return {Promise<unknown>}
    */
   getItemsBetween(beginStamp, endStamp) {
     return new Promise((resolve, reject) => {
-      storage.queryLikeAsArray(this.getBetweenKey(beginStamp, endStamp)).then(res => {
+      storage.queryLikeAsArray(getBetweenKey(beginStamp, endStamp)).then(res => {
         res.data = res.data.filter(item => item.status === ClockStatus.WORK)
 
         const data = beginStamp && endStamp ? res.data.filter(item => beginStamp <= item.startTime && item.startTime <= endStamp) : res.data
@@ -323,7 +330,7 @@ class StatisticStore {
    */
   getDailyItems(dayFormat, beginStamp = undefined, endStamp = undefined) {
     return new Promise((resolve, reject) => {
-      storage.queryLikeAsArray(this.getBetweenKey(beginStamp, endStamp)).then(({data}) => {
+      storage.queryLikeAsArray(getBetweenKey(beginStamp, endStamp)).then(({data}) => {
         data = beginStamp && endStamp ? data.filter(item => beginStamp <= item.startTime && item.startTime <= endStamp) : data
         const dayGroups = collect(data)
           .groupBy(item => dayjs(item.startTime).format(dayFormat))

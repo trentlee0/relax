@@ -15,10 +15,6 @@ export function arrayBufferToBase64ImagePNG(arrayBuffer) {
   return arrayBufferToBase64(arrayBuffer, 'image/png')
 }
 
-export function arrayBufferToBase64ImageJPEG(arrayBuffer) {
-  return arrayBufferToBase64(arrayBuffer, 'image/jpeg')
-}
-
 /**
  * @param {string} url
  * @return {Promise<string>}

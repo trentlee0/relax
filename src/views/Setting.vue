@@ -450,8 +450,6 @@ export default {
     })
   },
   activated() {
-    hotkeys.setScope('setting')
-
     this.initPage()
   },
   computed: {
@@ -495,7 +493,6 @@ export default {
   methods: {
     initPage() {
       this.initState()
-      window.document.documentElement.style.overflowY = 'auto'
     },
     initState() {
       this.workingTime = this.workingTimeFromStore

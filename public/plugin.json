@@ -1,6 +1,6 @@
 {
   "pluginName": "休息一下",
-  "description": "专注/休息提醒 & 白噪音 & 待办清单",
+  "description": "专注计时，休息提醒，白噪音和待办清单",
   "author": "Trent0",
   "version": "1.0.0",
   "homepage": "https://github.com/trentlee0/relax",
@@ -13,10 +13,11 @@
   "features": [
     {
       "code": "relax",
-      "explain": "休息一下主页",
+      "explain": "休息一下",
       "cmds": [
         "休息一下",
-        "Relax"
+        "Relax",
+        "xx"
       ]
     },
     {

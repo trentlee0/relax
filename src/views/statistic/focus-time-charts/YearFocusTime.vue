@@ -2,7 +2,7 @@
   <div>
     <v-chart :theme="chartTheme" autoresize :option="option" style="height: 360px"></v-chart>
     <div class="text--primary font-weight-light text-center">
-      {{ pagination.text }} 专注了 {{ workTimesSum }} 分钟
+      累积专注 {{ formatDurationMinutes(workTimesSum) }}
     </div>
   </div>
 </template>
@@ -10,13 +10,19 @@
 <script>
 import dayjs from 'dayjs'
 import statistics from '@/api/statistics'
+import {formatDurationMinutes} from '@/util/date'
 
 export default {
   name: 'YearFocusTime',
   data() {
     return {
       option: {
-        tooltip: {},
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
         xAxis: {
           data: []
         },
@@ -82,6 +88,9 @@ export default {
       }
       this.refreshData()
       return this.pagination.text
+    },
+    formatDurationMinutes(minutes) {
+      return formatDurationMinutes(minutes)
     }
   }
 }

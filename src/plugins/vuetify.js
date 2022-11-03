@@ -32,7 +32,6 @@ import {
   mdiHomeOutline,
   mdiRadioboxBlank,
   mdiRadioboxMarked,
-  mdiTimerPauseOutline,
   mdiMenu,
   mdiCloseThick,
   mdiBackupRestore,
@@ -41,7 +40,9 @@ import {
   mdiDeleteOutline,
   mdiCloudUploadOutline,
   mdiHelpCircleOutline,
-  mdiCloseCircleOutline
+  mdiCloseCircleOutline,
+  mdiVolumeMedium,
+  mdiTimerPlayOutline
 } from '@mdi/js'
 
 Vue.use(Vuetify)
@@ -53,6 +54,7 @@ export default new Vuetify({
     values: {
       'mdi-volume-off': mdiVolumeOff,
       'mdi-volume-mute': mdiVolumeMute,
+      'mdi-volume-low': mdiVolumeMedium,
       'mdi-volume-high': mdiVolumeHigh,
       'mdi-plus-circle': mdiPlusCircle,
       'mdi-view-dashboard-outline': mdiViewDashboardOutline,
@@ -75,7 +77,7 @@ export default new Vuetify({
       'mdi-chevron-right': mdiChevronRight,
       'mdi-calendar': mdiCalendar,
       'mdi-home-outline': mdiHomeOutline,
-      'mdi-timer-pause-outline': mdiTimerPauseOutline,
+      'mdi-timer-play-outline': mdiTimerPlayOutline,
       'mdi-close-thick': mdiCloseThick,
       'mdi-cloud-upload-outline': mdiCloudUploadOutline,
       'mdi-backup-restore': mdiBackupRestore,

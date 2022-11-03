@@ -5,14 +5,16 @@ module.exports = {
   ],
   productionSourceMap: false,
   pwa: {
-    name: 'Relax',
-    themeColor: '#38B47B',
-    msTileColor: '#000000',
     appleMobileWebAppCapable: 'yes',
-    appleMobileWebAppStatusBarStyle: 'white',
     workboxPluginMode: 'InjectManifest',
     workboxOptions: {
       swSrc: 'src/service-worker.js'
+    }
+  },
+  chainWebpack: (config) => {
+    if (process.env.APP_MODE === 'utools') {
+      config.plugins.delete('pwa')
+      config.plugins.delete('workbox')
     }
   }
 }

@@ -16,7 +16,7 @@
 
     <ToTop v-if="isTimelineView"></ToTop>
 
-    <v-tabs centered v-model="tab" @change="tabChangeEvent">
+    <v-tabs center-active centered :mobile-breakpoint="300" v-model="tab" @change="tabChangeEvent">
       <v-tab>总览</v-tab>
       <v-tab>专注统计</v-tab>
       <v-tab>专注时间</v-tab>
@@ -61,14 +61,12 @@ export default {
       tab: 0,
       tabLen: 4,
       tabMounts: new Set(),
-      isFirst: true,
-      shortcuts: shortcuts,
-      timelineIndex: 3
+      isFirstComing: true,
+      timelineIndex: 3,
+      shortcuts: shortcuts
     }
   },
-  mounted() {
-    this.tabMounts.add(this.tab)
-
+  created() {
     hotkeys(Object.values(shortcuts.statistic).join(','), 'statistic', (event, handler) => {
       event.preventDefault()
       switch (handler.key) {
@@ -83,11 +81,11 @@ export default {
       }
     })
   },
+  mounted() {
+    this.tabMounts.add(this.tab)
+  },
   activated() {
-    hotkeys.setScope('statistic')
-
-    window.document.documentElement.style.overflowY = 'overlay'
-    if (!this.isFirst) {
+    if (!this.isFirstComing) {
       this.tabMounts.forEach(tab => {
         switch (tab) {
           case 0:
@@ -106,7 +104,7 @@ export default {
         }
       })
     }
-    this.isFirst = false
+    this.isFirstComing = false
   },
   deactivated() {
     if (this.hasTimeline()) {

@@ -86,8 +86,8 @@ export const focusEfficiencyChinese = {
 /**
  * uTools 插件的 Feature
  */
-export class UToolsFeatureCodes {
-  static Home = 'relax'
+export class UToolsCodes {
+  static Relax = 'relax'
   static Work = 'start-work'
   static Rest = 'start-rest'
   static StopOrContinue = 'stop-continue-clock'
@@ -108,6 +108,8 @@ export class DataKey {
   static BackgroundMusic = 'backgroundMusic'
   static Todo = 'todo'
   static AutomaticTiming = 'automaticTiming'
+
+  static Visited = 'visited'
 }
 
 /**

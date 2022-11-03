@@ -90,7 +90,7 @@ export default {
     dropEvent(event, toIndex) {
       event.preventDefault()
       const fromIndex = event.dataTransfer.getData('fromIndex')
-      this.$bus.$emit('dropTodoItem', {fromIndex, toIndex})
+      this.$bus.$emit('drop-todo-item', {fromIndex, toIndex})
     },
     handleContextmenu(args) {
       const e = args.event
@@ -102,14 +102,14 @@ export default {
       this.showMenu = true
     },
     handleUpdate(args) {
-      this.$bus.$emit('updateTask', args)
+      this.$bus.$emit('update-task', args)
       this.editingTaskId = null
     },
     checkedClick(args) {
-      this.$bus.$emit('checkedTask', args)
+      this.$bus.$emit('checked-task', args)
     },
     handleMenuStartClick() {
-      this.$bus.$emit('startTask', {taskId: this.activeTaskId})
+      this.$bus.$emit('start-focus-task', {taskId: this.activeTaskId})
     },
     handleMenuEditClick() {
       this.editingTaskId = this.activeTaskId
@@ -119,7 +119,7 @@ export default {
       this.removeTaskDialog = true
     },
     handleDelete() {
-      this.$bus.$emit('removeTask', {taskId: this.removeTaskId})
+      this.$bus.$emit('remove-task', {taskId: this.removeTaskId})
       this.removeTaskDialog = false
     }
   }

@@ -81,23 +81,23 @@
         align-top
         dense
       >
-        <div v-for="(value, key, index) in dayGroups" v-if="index < maxLength" :key="index">
+        <div v-for="(minutes, date, index) in dayGroups" v-if="index < maxLength" :key="index">
           <v-timeline-item
             class="mb-6"
           >
             <div>
-              <span class="font-weight-bold">{{ key }}</span>
+              <span class="font-weight-bold">{{ date === today ? '今天' : (date === yesterday ? '昨天' : date) }}</span>
             </div>
             <div>
-              <span class="text--secondary">
-                专注 {{ formatMinute(value.workSum) }}，休息 {{ formatMinute(value.restSum) }}
+              <span class="text-body-2 text--secondary">
+                专注 {{ formatMinute(minutes.workSum) }}，休息 {{ formatMinute(minutes.restSum) }}
               </span>
             </div>
           </v-timeline-item>
 
           <v-timeline-item
             small
-            v-for="(item, j) in value.items"
+            v-for="(item, j) in minutes.items"
             :key="j"
             color="grey"
           >
@@ -140,7 +140,9 @@ export default {
       currentPage: 0,
       pageSize: 14,
       isCompleted: false,
-      isEmpty: false
+      isEmpty: false,
+      today: '',
+      yesterday: ''
     }
   },
   computed: {
@@ -162,7 +164,10 @@ export default {
   methods: {
     refreshData() {
       console.log('timeline refresh')
-      statistics.getDailyItems('YYYY年MM月DD日').then(({data}) => {
+      const format = 'YYYY年MM月DD日'
+      statistics.getDailyItems(format).then(({data}) => {
+        this.today = dayjs().format(format)
+        this.yesterday = dayjs().subtract(1, 'day').format(format)
         this.isEmpty = data.isEmpty
         this.dayGroups = data.data
         this.isCompleted = true

@@ -26,10 +26,10 @@ export function rgbToHex(r, g, b) {
 }
 
 /**
- * @param src
+ * @param {string} src
  * @return {Promise<string>}
  */
-export function getSubjectHexColor(src) {
+export function getSubjectColor(src) {
   return new Promise((resolve, reject) => {
     const colorThief = new ColorThief()
     const imgElement = document.createElement('img')
